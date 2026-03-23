@@ -1,31 +1,51 @@
 @import "tailwindcss";
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  --font-cinzel: var(--font-cinzel);
+  --font-playfair: var(--font-playfair);
+  --color-rose-gold: #c58e71;
+  
+  /* ✨ 빙글빙글 도는 우주 애니메이션 (이전 코드에 빠져있었어요!) */
+  --animate-orbit: orbit 30s linear infinite;
+  
+  @keyframes orbit {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 }
 
 body {
-  background-color: #050511; /* 아주 어두운 남색/검은색 */
+  /* 단순한 검은색 대신, 은은한 보랏빛이 도는 몽환적인 밤하늘 그라데이션 적용 */
+  background: radial-gradient(circle at top center, #110820 0%, #050511 100%);
   color: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh; /* 화면 전체를 덮도록 필수 추가 */
+  margin: 0;
 }
 
-/* 2. 로즈골드 텍스트 색상 */
+/* --- 아래는 기존에 작성했던 클로토 맞춤 디자인입니다 --- */
+
 .rose-gold-text {
-  color: #c58e71;
+  color: var(--color-rose-gold);
 }
 
-/* 4. 기하학적 배경 패턴 (뒤에 깔리는 은은한 무늬) */
+.btn-celestial {
+  background: transparent;
+  border: 1px solid rgba(197, 142, 113, 0.4);
+  color: var(--color-rose-gold);
+  padding: 1rem 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-celestial:hover {
+  background: rgba(197, 142, 113, 0.1);
+  border-color: var(--color-rose-gold);
+  box-shadow: 0 0 20px rgba(197, 142, 113, 0.2);
+}
+
 .geometric-bg {
   background-image: 
     radial-gradient(circle at 50% 50%, rgba(197, 142, 113, 0.05) 0%, transparent 50%),
@@ -34,7 +54,6 @@ body {
   background-size: 100% 100%, 50px 50px, 50px 50px;
 }
 
-/* 5. 스트림 프레임 테두리 빛 효과 */
 .stream-frame {
   position: relative;
   background: rgba(13, 11, 26, 0.6);
@@ -46,6 +65,6 @@ body {
   position: absolute;
   width: 4px;
   height: 4px;
-  background: #c58e71;
-  box-shadow: 0 0 8px #c58e71;
+  background: var(--color-rose-gold);
+  box-shadow: 0 0 8px var(--color-rose-gold);
 }

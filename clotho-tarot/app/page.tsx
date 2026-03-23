@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AppState, ReadingType, TarotCard, ReadingResult, ChatMessage, User, TarotMaster } from '../../types/types';
 import { Header } from '../../components/Layout';
 import { LoginModal } from '../../components/LoginModal';
-import { TAROT_CARDS, TAROT_MASTERS } from '../../constants/constants';
+import { TAROT_MASTERS } from '../../constants/constants'; // 💡 이제 카드는 여기서 안 가져옵니다!
 import { interpretTarot, chatAboutReading } from '../../lib/geminiService';
 import { Moon, Sparkles, RefreshCw, ArrowRight, Star, Compass, Sun, Eye, ChevronDown, Send, Hexagon, ChevronLeft, ChevronRight, User as UserIcon, MessageCircle, UserPlus, Info } from 'lucide-react';
 
@@ -55,6 +55,9 @@ const App: React.FC = () => {
   const [selectedMaster, setSelectedMaster] = useState<TarotMaster | null>(null);
   const [regData, setRegData] = useState({ name: '', title: '', description: '', specialization: '' });
 
+  // ✨ 추가: DB에서 불러온 카드를 담을 장바구니입니다!
+  const [dbCards, setDbCards] = useState<any[]>([]);
+
   const spreadSectionRef = useRef<HTMLDivElement>(null);
   const deckSectionRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -64,6 +67,22 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
 
   const TOTAL_DECK_SIZE = 78;
+
+  // ✨ 추가: 화면이 처음 켜질 때 DB에서 78장 카드를 싹 가져옵니다.
+  useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        const response = await fetch('/api/tarot');
+        if (response.ok) {
+          const data = await response.json();
+          setDbCards(data);
+        }
+      } catch (error) {
+        console.error('DB 카드 로딩 에러:', error);
+      }
+    };
+    fetchCards();
+  }, []);
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -105,7 +124,6 @@ const App: React.FC = () => {
       let response = '';
       if (isConsultationMode && selectedMaster) {
         response = await chatAboutReading(
-          // 💡 수정됨: 복잡한 parts 객체 대신 심플한 content로 변경!
           updatedMessages.map(m => ({ 
             role: m.role === 'assistant' ? 'model' : 'user', 
             content: m.content 
@@ -115,7 +133,6 @@ const App: React.FC = () => {
         );
       } else if (readingResult) {
         response = await chatAboutReading(
-          // 💡 수정됨: 여기도 content로 심플하게 변경!
           updatedMessages.map(m => ({ 
             role: m.role === 'assistant' ? 'model' : 'user', 
             content: m.content 
@@ -143,7 +160,8 @@ const App: React.FC = () => {
     setIsLoading(true);
     setState(AppState.RESULT);
 
-    const shuffled = [...TAROT_CARDS].sort(() => 0.5 - Math.random());
+    // ✨ 수정: TAROT_CARDS 대신 방금 가져온 dbCards를 섞습니다!
+    const shuffled = [...dbCards].sort(() => 0.5 - Math.random());
     const finalPickedCards = shuffled.slice(0, pickedIndices.length);
 
     try {
@@ -273,10 +291,12 @@ const App: React.FC = () => {
       <section ref={deckSectionRef} className="relative min-h-screen py-32 px-6 flex flex-col items-center">
         <h2 className="font-cinzel text-3xl md:text-5xl text-white tracking-[0.5em] mb-24 uppercase text-center">아르카나 도감</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4 max-w-7xl w-full">
-          {TAROT_CARDS.map(card => (
+          {/* ✨ 수정: DB에서 가져온 dbCards로 도감을 예쁘게 그려줍니다! */}
+          {dbCards.map(card => (
             <div key={card.id} className="relative group cursor-pointer aspect-[2/3] overflow-hidden">
                <div className="absolute inset-0 border border-[#c58e7133] z-10 group-hover:border-rose-gold transition-colors" />
-               <img src={card.image} alt={card.name} className="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 scale-110 group-hover:scale-100" />
+               {/* 💡 DB에는 사진 주소가 imageUrl로 되어 있으니 이에 맞게 수정했습니다. */}
+               <img src={card.imageUrl || card.image} alt={card.name} className="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 scale-110 group-hover:scale-100" />
                <div className="absolute bottom-0 inset-x-0 bg-slate-950/80 p-2 text-center transform translate-y-full group-hover:translate-y-0 transition-transform">
                   <p className="font-cinzel text-[10px] rose-gold-text tracking-widest uppercase">{card.nameKo}</p>
                </div>
@@ -519,7 +539,7 @@ const App: React.FC = () => {
              {readingResult?.cards.map((card, i) => (
                 <StreamFrame key={i} className="animate-in fade-in slide-in-from-left duration-1000">
                    <div className="aspect-[3/2] overflow-hidden mb-6">
-                      <img src={card.image} alt={card.name} className="w-full h-full object-cover" />
+                      <img src={card.imageUrl || card.image} alt={card.name} className="w-full h-full object-cover" />
                    </div>
                    <h3 className="font-cinzel text-2xl text-white mb-2 tracking-widest text-center">{card.nameKo}</h3>
                    <p className="rose-gold-text font-cinzel text-xs tracking-widest uppercase text-center">{card.name}</p>

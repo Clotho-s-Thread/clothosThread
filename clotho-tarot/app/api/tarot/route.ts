@@ -4,6 +4,7 @@ import { prisma } from "../../../../lib/prisma";
 
 console.log("현재 인식된 DB 주소:", process.env.DATABASE_URL);
 
+// 🔮 [1] 사용자의 질문과 카드를 받아 AI 해석을 해주는 POST API
 export async function POST(req: Request) {
   try {
     const { messages, selectedCards } = await req.json();
@@ -70,16 +71,14 @@ export async function POST(req: Request) {
         `;
     }
 
-    // 3. Gemini API 초기화 및 프롬프트 주입
-    // .env.local에 설정한 변수명으로 수정 (예: NEXT_PUBLIC_GEMINI_API_KEY 또는 GEMINI_API_KEY)
-    // 원래 코드 지우고 이렇게 직접 키를 넣어봅니다 (따옴표 필수)
-    const apiKey = "AIzaSyD9a8d1qlhtCaM2H32_R1fvZxbpKIDMpJM";
-    if (!apiKey) throw new Error("API 키가 설정되지 않았습니다.");
+    // 🚨 3. Gemini API 초기화 (가짜 키는 지우고 .env 파일의 진짜 키를 불러옵니다!)
+    const apiKey ="AIzaSyD9a8d1qlhtCaM2H32_R1fvZxbpKIDMpJM";
+    if (!apiKey) throw new Error("API 키가 설정되지 않았습니다. .env 파일을 확인해주세요.");
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
         model: "gemini-2.5-flash",
-        systemInstruction: systemPrompt, // ✨ 최신 SDK의 깔끔한 프롬프트 주입 방식!
+        systemInstruction: systemPrompt, 
         generationConfig: { maxOutputTokens: 5000 }
     });
 
@@ -120,5 +119,20 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("에러:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+
+// 📚 [2] 카드 도감을 위해 DB에서 78장의 카드를 모두 불러오는 GET API
+export async function GET() {
+  try {
+    const cards = await prisma.tarotCard.findMany({
+      orderBy: { number: 'asc' } // 0번 바보 카드부터 순서대로 정렬해서 가져옵니다.
+    });
+    
+    return NextResponse.json(cards);
+  } catch (error: any) {
+    console.error("카드 도감 불러오기 에러:", error);
+    return NextResponse.json({ error: "카드 목록을 불러올 수 없습니다." }, { status: 500 });
   }
 }
