@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -37,6 +37,6 @@
     ".next/dev/types/**/*.ts",
     ".next/types/**/*.ts",
     "**/*.mts"
-  ],
+, "../prisma.config.ts"  ],
   "exclude": ["node_modules"],
 }
