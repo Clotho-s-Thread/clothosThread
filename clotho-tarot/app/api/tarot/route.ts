@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
         // ✨ 핵심: 사용자가 클릭한 번호 순서(selectedCards)대로 정확히 재배열
         drawnCards = selectedCards.map((selectedNumber: number, index: number) => {
-            const card = cardsFromDB.find(c => c.number === selectedNumber);
+            const card = cardsFromDB.find((c: any) => c.number === selectedNumber);
             if (!card) return null;
 
             const isReversed = Math.random() < 0.5; // 50% 확률로 역방향

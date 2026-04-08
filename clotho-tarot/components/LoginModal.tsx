@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
-import { X, Mail, Lock, Github, Chrome } from 'lucide-react';
+import { X, Mail, Lock} from 'lucide-react';
+import { FaGithub, FaGoogle } from "react-icons/fa";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -101,11 +102,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
 
           <div className="grid grid-cols-2 gap-4">
             <button className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 py-2 rounded-xl hover:bg-white/10 transition-colors">
-              <Chrome className="w-4 h-4 text-slate-400" />
+              <FaGoogle className="w-4 h-4 text-slate-400" />
               <span className="text-xs text-slate-300 font-cinzel uppercase">GOOGLE</span>
             </button>
             <button className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 py-2 rounded-xl hover:bg-white/10 transition-colors">
-              <Github className="w-4 h-4 text-slate-400" />
+              <FaGithub className="w-4 h-4 text-slate-400" />
               <span className="text-xs text-slate-300 font-cinzel uppercase">GITHUB</span>
             </button>
           </div>
