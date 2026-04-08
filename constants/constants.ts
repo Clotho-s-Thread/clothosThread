@@ -1,88 +1,9 @@
+// constants/constants.ts
 
-import { TarotCard, TarotMaster } from '@/types';
+import { TarotMaster } from '../types/types';
+import { TarotDeck } from '../types/types';
 
-export const TAROT_CARDS: TarotCard[] = [
-  {
-    id: '0',
-    name: 'The Fool',
-    nameKo: '광대',
-    suit: 'Major',
-    number: 0,
-    image: 'https://picsum.photos/seed/fool/400/600',
-    meaningUp: 'Beginnings, innocence, spontaneity, a free spirit.',
-    meaningRev: 'Holding back, recklessness, risk-taking.'
-  },
-  {
-    id: '1',
-    name: 'The Magician',
-    nameKo: '마법사',
-    suit: 'Major',
-    number: 1,
-    image: 'https://picsum.photos/seed/magician/400/600',
-    meaningUp: 'Manifestation, resourcefulness, power, inspired action.',
-    meaningRev: 'Manipulation, poor planning, untapped talents.'
-  },
-  {
-    id: '2',
-    name: 'The High Priestess',
-    nameKo: '고위 여사제',
-    suit: 'Major',
-    number: 2,
-    image: 'https://picsum.photos/seed/priestess/400/600',
-    meaningUp: 'Intuition, sacred knowledge, divine feminine, the subconscious mind.',
-    meaningRev: 'Secrets, disconnected from intuition, withdrawal and silence.'
-  },
-  {
-    id: '3',
-    name: 'The Empress',
-    nameKo: '황후',
-    suit: 'Major',
-    number: 3,
-    image: 'https://picsum.photos/seed/empress/400/600',
-    meaningUp: 'Femininity, beauty, nature, nurturing, abundance.',
-    meaningRev: 'Creative block, dependence on others.'
-  },
-  {
-    id: '4',
-    name: 'The Emperor',
-    nameKo: '황제',
-    suit: 'Major',
-    number: 4,
-    image: 'https://picsum.photos/seed/emperor/400/600',
-    meaningUp: 'Authority, establishment, structure, a father figure.',
-    meaningRev: 'Domination, excessive control, lack of discipline, inflexibility.'
-  },
-  {
-    id: '5',
-    name: 'The Hierophant',
-    nameKo: '교황',
-    suit: 'Major',
-    number: 5,
-    image: 'https://picsum.photos/seed/hierophant/400/600',
-    meaningUp: 'Spiritual wisdom, religious beliefs, conformity, tradition, institutions.',
-    meaningRev: 'Personal beliefs, freedom, challenging the status quo.'
-  },
-  {
-    id: '6',
-    name: 'The Lovers',
-    nameKo: '연인',
-    suit: 'Major',
-    number: 6,
-    image: 'https://picsum.photos/seed/lovers/400/600',
-    meaningUp: 'Love, harmony, relationships, values alignment, choices.',
-    meaningRev: 'Self-love, disharmony, imbalance, misalignment of values.'
-  },
-  {
-    id: '7',
-    name: 'The Chariot',
-    nameKo: '전차',
-    suit: 'Major',
-    number: 7,
-    image: 'https://picsum.photos/seed/chariot/400/600',
-    meaningUp: 'Control, willpower, success, action, determination.',
-    meaningRev: 'Self-discipline, opposition, lack of direction.'
-  }
-];
+// 🚨 TAROT_CARDS 배열은 이제 DB에서 가져오므로 완전히 삭제했습니다!
 
 export const TAROT_MASTERS: TarotMaster[] = [
   {
@@ -124,5 +45,32 @@ export const TAROT_MASTERS: TarotMaster[] = [
     image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=300&h=400',
     rating: 5.0,
     isOnline: true
+  }
+];
+
+export const TAROT_DECKS: TarotDeck[] = [
+  {
+    id: 'deck-classic',
+    name: 'Classic Canvas',
+    nameKo: '클래식 캔버스',
+    description: '운명의 흐름을 있는 그대로 비춰주는 가장 순수한 형태의 덱입니다.',
+    thumbnail: '/images/tarot/0_fool.png',
+    cssFilter: 'none'
+  },
+  {
+    id: 'deck-moonlight',
+    name: 'Moonlight Whisper',
+    nameKo: '달빛의 속삭임',
+    description: '푸른 달빛 아래 은은하게 빛나며 무의식의 심연을 보여줍니다.',
+    thumbnail: '/images/tarot/2_priestess.png',
+    cssFilter: 'hue-rotate(200deg) saturate(0.8) brightness(0.9)' // 푸른빛이 돌게 만듦
+  },
+  {
+    id: 'deck-sunset',
+    name: 'Sunset Oracle',
+    nameKo: '노을빛 신탁',
+    description: '황혼의 따뜻한 빛을 머금어 직관적이고 감성적인 해답을 제시합니다.',
+    thumbnail: '/images/tarot/19_sun.png',
+    cssFilter: 'sepia(0.6) hue-rotate(-20deg) saturate(1.2)' // 노을빛 몽환적인 느낌
   }
 ];

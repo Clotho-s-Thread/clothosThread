@@ -8,7 +8,10 @@ export enum AppState {
   DECK_VIEW = 'DECK_VIEW',
   MASTERS_VIEW = 'MASTERS_VIEW',
   MASTER_REGISTRATION = 'MASTER_REGISTRATION',
-  LIVE_CONSULTATION = 'LIVE_CONSULTATION'
+  LIVE_CONSULTATION = 'LIVE_CONSULTATION',
+  MAJOR_ARCANA_VIEW = 'MAJOR_ARCANA_VIEW',
+  MINOR_ARCANA_VIEW = 'MINOR_ARCANA_VIEW',
+  DECK_SELECTION = 'DECK_SELECTION'
 }
 
 export enum ReadingType {
@@ -25,6 +28,7 @@ export interface TarotCard {
   image: string;
   meaningUp: string;
   meaningRev: string;
+  imageUrl?: string;
 }
 
 export interface TarotMaster {
@@ -56,4 +60,14 @@ export interface User {
   name: string;
   email: string;
   profileImage?: string;
+}
+
+// 2. 파일 맨 아래에 타로 덱(테마) 설계도 추가
+export interface TarotDeck {
+  id: string;
+  name: string;
+  nameKo: string;
+  description: string;
+  thumbnail: string;
+  cssFilter: string; // ✨ 이미지를 덱 테마에 맞게 변환해 줄 마법의 필터
 }

@@ -1,4 +1,4 @@
-
+"use client";
 import React, { useState } from 'react';
 import { X, Mail, Lock, Github, Chrome } from 'lucide-react';
 
@@ -21,15 +21,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
+    // 💡 핵심 1: 테일윈드 클래스 대신 style={{ zIndex: 999999 }}로 브라우저에 레이어 최상단을 강제 명령합니다!
+    <div style={{ zIndex: 999999 }} className="fixed inset-0 flex items-center justify-center p-4">
+      
+      {/* 화면 전체를 덮는 어두운 블러 배경 (클릭 시 닫힘) */}
       <div 
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300" 
+        className="absolute inset-0 bg-black/70 backdrop-blur-md animate-in fade-in duration-300" 
         onClick={onClose} 
       />
       
-      {/* Modal Content */}
-      <div className="relative w-full max-w-md bg-slate-900 border border-amber-200/20 rounded-3xl shadow-2xl p-8 animate-in zoom-in slide-in-from-bottom-4 duration-300">
+      {/* 💡 핵심 2: 뒤가 절대 비치지 않는 고급스러운 밤하늘 단색 배경 유지 */}
+      <div 
+        style={{ backgroundColor: '#0d0b1a' }}
+        className="relative w-full max-w-md border border-[#c58e714d] rounded-3xl shadow-2xl p-8 animate-in zoom-in slide-in-from-bottom-4 duration-300"
+      >
         <button 
           onClick={onClose}
           className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors"
@@ -47,36 +52,38 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+          <div className="flex items-center w-full bg-white/5 border border-white/10 rounded-xl px-4 py-1 focus-within:border-[#c58e71] transition-colors">
+            <Mail className="w-5 h-5 text-slate-500 flex-shrink-0" />
             <input 
               type="email" 
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="이메일 주소"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-200/50 transition-colors"
+              className="w-full bg-transparent py-3 pl-4 pr-2 text-white placeholder:text-slate-600 focus:outline-none"
             />
           </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+
+          <div className="flex items-center w-full bg-white/5 border border-white/10 rounded-xl px-4 py-1 focus-within:border-[#c58e71] transition-colors">
+            <Lock className="w-5 h-5 text-slate-500 flex-shrink-0" />
             <input 
               type="password" 
               required
               placeholder="비밀번호"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-200/50 transition-colors"
+              className="w-full bg-transparent py-3 pl-4 pr-2 text-white placeholder:text-slate-600 focus:outline-none"
             />
           </div>
 
           {!isSignUp && (
             <div className="text-right">
-              <button type="button" className="text-xs text-amber-200/60 hover:text-amber-200 transition-colors font-cinzel">비밀번호를 잊으셨나요?</button>
+              <button type="button" className="text-xs text-[#c58e71]/70 hover:text-[#c58e71] transition-colors font-cinzel pt-2">비밀번호를 잊으셨나요?</button>
             </div>
           )}
 
           <button 
             type="submit"
-            className="w-full bg-amber-200 hover:bg-amber-100 text-slate-950 font-cinzel font-bold py-3 rounded-xl tracking-[0.2em] transition-all transform active:scale-95 shadow-lg shadow-amber-200/10 uppercase"
+            style={{ backgroundColor: '#c58e71' }}
+            className="w-full text-slate-950 hover:opacity-90 font-cinzel font-bold py-3 mt-4 rounded-xl tracking-[0.2em] transition-all transform active:scale-95 shadow-lg shadow-[#c58e71]/20 uppercase"
           >
             {isSignUp ? '회원가입' : '로그인'}
           </button>
@@ -84,8 +91,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
 
         <div className="mt-8">
           <div className="relative flex items-center justify-center mb-6">
-            <div className="w-full border-t border-white/5" />
-            <span className="absolute px-4 bg-slate-900 text-[10px] text-slate-600 font-cinzel tracking-widest uppercase">또는 다음으로 계속하기</span>
+            <div className="w-full border-t border-white/10" />
+            <span 
+              style={{ backgroundColor: '#0d0b1a' }}
+              className="absolute px-4 text-[10px] text-slate-500 font-cinzel tracking-widest uppercase"
+            >
+            </span>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -104,7 +115,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
           {isSignUp ? '이미 계정이 있으신가요?' : '아직 회원이 아니신가요?'}
           <button 
             onClick={() => setIsSignUp(!isSignUp)}
-            className="ml-2 text-amber-200 font-cinzel tracking-wider underline underline-offset-4 uppercase"
+            className="ml-2 text-[#c58e71] font-cinzel tracking-wider underline underline-offset-4 uppercase hover:text-white transition-colors"
           >
             {isSignUp ? '로그인' : '회원가입'}
           </button>
@@ -113,3 +124,4 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
     </div>
   );
 };
+export default LoginModal;

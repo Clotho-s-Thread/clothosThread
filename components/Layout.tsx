@@ -1,7 +1,8 @@
+'use client'; 
 
 import React, { useState, useEffect } from 'react';
 import { LogIn, User as UserIcon, LogOut, Star, Users } from 'lucide-react';
-import { User } from '../types/types';
+import { User } from '../types/types'; 
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -35,7 +36,11 @@ export const Header: React.FC<LayoutProps> = ({
 
   return (
     <div className="min-h-screen">
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled ? 'bg-slate-950/90 backdrop-blur-xl py-4 border-b border-[#c58e7133]' : 'bg-transparent py-8'}`}>
+      {/* ✨ 100% 확실한 방법: z-index와 pointer-events를 테일윈드에 맡기지 않고 직접(style) 강제 주입합니다! */}
+      <nav 
+        style={{ zIndex: 999999, pointerEvents: 'auto' }}
+        className={`fixed top-0 w-full transition-all duration-500 ${isScrolled ? 'bg-slate-950/90 backdrop-blur-xl py-4 border-b border-[#c58e7133]' : 'bg-transparent py-8'}`}
+      >
         <div className="max-w-7xl mx-auto px-10 flex justify-between items-center">
           <div 
             className="flex items-center gap-4 cursor-pointer group"
@@ -49,8 +54,16 @@ export const Header: React.FC<LayoutProps> = ({
           </div>
           
           <div className="flex items-center gap-8 md:gap-12 font-cinzel text-xs tracking-[0.3em]">
-            <button onClick={onDeckClick} className="text-white/40 hover:text-[#c58e71] transition-colors uppercase hidden lg:block">타로 도감</button>
-            <button onClick={onMastersClick} className="text-white/40 hover:text-[#c58e71] transition-colors uppercase flex items-center gap-2 font-bold">
+            <button 
+              onClick={onDeckClick} 
+              className="text-white/40 hover:text-[#c58e71] transition-colors uppercase hidden lg:block"
+            >
+              타로 도감
+            </button>
+            <button 
+              onClick={onMastersClick} 
+              className="text-white/40 hover:text-[#c58e71] transition-colors uppercase flex items-center gap-2 font-bold"
+            >
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">전문가 상담</span>
             </button>

@@ -1,59 +1,66 @@
-import { TarotCard, ReadingType } from "../types/types";
+import { ReadingType, TarotCard } from '../types/types';
 
-/**
- * 프론트엔드(화면)에서 백엔드(route.ts)로 요청을 보내는 서비스 파일입니다.
- * 이제 API 키 노출 없이 안전하게 통신합니다.
- */
+// ✨ 아까 next.config.ts에 설정한 '우회로(Proxy)' 주소를 사용합니다.
+// (실제로는 https://clotho-server-vyw7.vercel.app/api/tarot/chat 으로 날아갑니다!)
+const SERVER_API_URL = '/api/server/tarot/chat';
 
-// 1. 타로 결과 첫 해석 요청
-export const interpretTarot = async (
-  question: string,
-  type: ReadingType, 
-  cards: TarotCard[]
-) => {
-  // 백엔드가 요구하는 형식에 맞춰 데이터 가공
-  const messages = [{ role: 'user', content: question }];
-  const selectedCards = cards.map(c => c.number); // 카드의 번호만 추출해서 전달
+// 1. 처음 타로 카드를 뽑았을 때 해석 요청
+export const interpretTarot = async (question: string, type: ReadingType, cards: TarotCard[]) => {
+  try {
+    const response = await fetch(SERVER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // 💡 서버팀에게 '질문'과 '뽑은 카드 번호'를 포장해서 보냅니다.
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: question }],
+        selectedCards: cards.map(c => c.number), 
+      }),
+    });
 
-  // 💡 만약 route.ts를 `app/api/route.ts`에 만들었다면 주소를 '/api'로 변경하세요!
-  const response = await fetch('/api/tarot', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, selectedCards })
-  });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("서버팀 API 에러 상세:", errorText);
+      throw new Error(`서버 에러: ${response.status}`);
+    }
 
-  if (!response.ok) {
-    throw new Error('운명의 실타래를 읽는 중 오류가 발생했습니다.');
+    const data = await response.json();
+    
+    // 🚨 주의: 서버팀이 완성된 답변을 'text', 'reply', 'answer' 중 어떤 이름으로 보내는지 확인이 필요합니다!
+    return data.text || data.reply || data.answer || "해석을 불러오지 못했습니다.";
+
+  } catch (error) {
+    console.error("타로 해석 요청 실패:", error);
+    return "운명의 실타래가 엉켰습니다. 잠시 후 다시 시도해주세요.";
   }
-
-  const data = await response.json();
-  return data.text;
 };
 
+// 2. 타로 해석 후 이어서 채팅할 때 요청
+export const chatAboutReading = async (messages: any[], newMsg: string, context: string) => {
+  try {
+    const response = await fetch(SERVER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [...messages, { role: 'user', content: newMsg }],
+        context: context
+      }),
+    });
 
-// 2. 타로 결과에 대한 추가 질문 (전문가 1:1 상담 및 채팅 모드)
-export const chatAboutReading = async (
-  history: { role: 'user' | 'assistant' | 'model', content: string }[],
-  newQuestion: string,
-  readingContext: string // page.tsx 기존 코드와의 호환성을 위해 남겨둠
-) => {
-  // 기존 대화 기록 맨 끝에 새로운 질문 추가
-  const messages = [
-    ...history,
-    { role: 'user', content: newQuestion }
-  ];
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("채팅 API 에러 상세:", errorText);
+      throw new Error(`서버 에러: ${response.status}`);
+    }
 
-  // 추가 채팅일 때는 이미 뽑은 카드 정보 없이 메시지 묶음만 보냅니다
-  const response = await fetch('/api/tarot', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages })
-  });
+    const data = await response.json();
+    return data.text || data.reply || data.answer || "응답을 불러오지 못했습니다.";
 
-  if (!response.ok) {
-    throw new Error('클로토와 대화하는 중 오류가 발생했습니다.');
+  } catch (error) {
+    console.error("채팅 요청 실패:", error);
+    return "운명의 실타래가 엉켰습니다. 잠시 후 다시 시도해주세요.";
   }
-
-  const data = await response.json();
-  return data.text;
 };
