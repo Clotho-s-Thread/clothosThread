@@ -1,7 +1,7 @@
 import React from 'react';
 import { Users, Star, MessageCircle, ShieldCheck, Sparkles } from 'lucide-react';
-import StreamFrame from '../../../components/StreamFrame';
-import StreamUIOverlay from '../../../components/StreamUIOverlay';
+import StreamFrame from '../../components/StreamFrame';
+import StreamUIOverlay from '../../components/StreamUIOverlay';
 
 interface MastersListViewProps {
   onSelectMaster: (master: any) => void;

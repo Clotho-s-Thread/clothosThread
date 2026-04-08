@@ -1,5 +1,5 @@
 import React from 'react';
-import StreamFrame from '../../../components/StreamFrame';
+import StreamFrame from '../../components/StreamFrame';
 
 interface ArcanaLibraryViewProps {
   type: 'Major' | 'Minor';

@@ -1,13 +1,13 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import { AppState, ReadingType, TarotCard, ReadingResult, ChatMessage, User, TarotMaster, TarotDeck } from '../../types/types';
-import { Header } from '../../components/Layout';
-import { LoginModal } from '../../components/LoginModal';
-import { TAROT_MASTERS, TAROT_DECKS } from '../../constants/constants'; 
-import { interpretTarot, chatAboutReading } from '../../lib/geminiService';
-import StreamFrame from '../../components/StreamFrame';
-import StreamUIOverlay from '../../components/StreamUIOverlay';
-import TarotResult from "../../components/TarotResult";
+import { AppState, ReadingType, TarotCard, ReadingResult, ChatMessage, User, TarotMaster, TarotDeck } from '../types/types';
+import { Header } from '../components/Layout';
+import { LoginModal } from '../components/LoginModal';
+import { TAROT_MASTERS, TAROT_DECKS } from '../constants/constants'; 
+import { interpretTarot, chatAboutReading } from '../lib/geminiService';
+import StreamFrame from '../components/StreamFrame';
+import StreamUIOverlay from '../components/StreamUIOverlay';
+import TarotResult from "../components/TarotResult";
 import HomeView from '../features/home/HomeView';
 // 🚨 기존 코드 어딘가에 있는 이 줄을 찾아서 'Lock'을 추가해 줍니다!
 import { Moon, Sparkles, RefreshCw, ArrowRight, Star, Compass, Sun, Eye, ChevronDown, Send, Hexagon, ChevronLeft, ChevronRight, User as UserIcon, MessageCircle, UserPlus, Info, Lock } from 'lucide-react';

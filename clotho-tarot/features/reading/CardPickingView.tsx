@@ -1,9 +1,9 @@
 "use client";
 import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight, Star, Hexagon, ArrowRight } from 'lucide-react';
-import { ReadingType } from '../../../types/types';
-import StreamUIOverlay from '../../../components/StreamUIOverlay';
-import StreamFrame from '../../../components/StreamFrame';
+import { ReadingType } from '../../types/types';
+import StreamUIOverlay from '../../components/StreamUIOverlay';
+import StreamFrame from '../../components/StreamFrame';
 
 interface CardPickingViewProps {
   selectedType: ReadingType | null;

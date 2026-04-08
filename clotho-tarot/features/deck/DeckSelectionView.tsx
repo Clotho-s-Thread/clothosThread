@@ -1,6 +1,6 @@
 import React from 'react';
-import StreamFrame from '../../../components/StreamFrame';
-import StreamUIOverlay from '../../../components/StreamUIOverlay';
+import StreamFrame from '../../components/StreamFrame';
+import StreamUIOverlay from '../../components/StreamUIOverlay';
 
 interface DeckSelectionViewProps {
   onSelect: (deck: any) => void;

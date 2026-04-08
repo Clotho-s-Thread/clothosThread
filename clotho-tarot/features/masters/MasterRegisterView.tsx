@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShieldCheck, ArrowLeft } from 'lucide-react';
-import StreamFrame from '../../../components/StreamFrame';
+import StreamFrame from '../../components/StreamFrame';
 
 interface MasterRegisterViewProps {
   regData: any;

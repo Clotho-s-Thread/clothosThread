@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "../../../lib/prisma";
 
 // 🔮 [1] 사용자의 질문과 카드를 받아 AI 해석을 해주는 POST API
 export async function POST(req: Request) {

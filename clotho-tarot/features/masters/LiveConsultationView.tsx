@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Send, Phone } from 'lucide-react';
-import StreamFrame from '../../../components/StreamFrame';
+import StreamFrame from '../../components/StreamFrame';
 
 interface LiveConsultationViewProps {
   selectedMaster: any;

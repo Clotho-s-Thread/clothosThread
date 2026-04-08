@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { Star, Sun, Moon, ChevronDown, RefreshCw } from 'lucide-react';
-import { AppState, ReadingType, TarotDeck } from '../../../types/types';
-import StreamFrame from '../../../components/StreamFrame';
-import StreamUIOverlay from '../../../components/StreamUIOverlay';
+import { AppState, ReadingType, TarotDeck } from '../../types/types';
+import StreamFrame from '../../components/StreamFrame';
+import StreamUIOverlay from '../../components/StreamUIOverlay';
 
 interface HomeViewProps {
   selectedDeck: TarotDeck;

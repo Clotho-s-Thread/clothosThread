@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useRef } from 'react';
 import { Compass, Sun, Moon, Star, RefreshCw, Send } from 'lucide-react';
-import { ReadingType, ChatMessage } from '../../../types/types';
-import StreamUIOverlay from '../../../components/StreamUIOverlay';
-import StreamFrame from '../../../components/StreamFrame';
+import { ReadingType, ChatMessage } from '../../types/types';
+import StreamUIOverlay from '../../components/StreamUIOverlay';
+import StreamFrame from '../../components/StreamFrame';
 
 interface TarotResultViewProps {
   readingResult: any;
