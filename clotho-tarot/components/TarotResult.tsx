@@ -20,6 +20,7 @@ const TarotResult = ({
   resetReading,
   renderChatSection,
 }: TarotResultProps) => {
+  
   // 3장 스프레드인지 확인
   const isThreeCard =
     readingResult?.type === "PAST_PRESENT_FUTURE" ||
@@ -34,6 +35,11 @@ const TarotResult = ({
       c.direction?.toLowerCase() === "reversed" ||
       c.isReversed === true ||
       c.is_reversed === true;
+
+      console.log(`card:`, card);
+      console.log(`c:`, c);
+      console.log(`orientation:`, c.orientation, card.orientation);
+      console.log(`isReversed:`, isReversed);
 
     const label = layoutType === "3" 
       ? (i === 0 ? "Past (과거)" : i === 1 ? "Present (현재)" : "Future (미래)") 

@@ -3,20 +3,23 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AppState, ReadingType, TarotCard, ReadingResult, ChatMessage, User, TarotMaster, TarotDeck } from '../types/types';
 import { Header } from '../components/Layout';
 import { LoginModal } from '../components/LoginModal';
-import { TAROT_MASTERS, TAROT_DECKS } from '../constants/constants'; 
+import MyPageContent from '../components/MyPageContent';
+import { TAROT_MASTERS, TAROT_DECKS, POINT_PACKAGES, SUBSCRIPTION_PACKAGES } from '../constants/constants'; 
 import { interpretTarot, chatAboutReading } from '../lib/geminiService';
 import StreamFrame from '../components/StreamFrame';
 import StreamUIOverlay from '../components/StreamUIOverlay';
 import TarotResult from "../components/TarotResult";
 import HomeView from '../features/home/HomeView';
-// 🚨 기존 코드 어딘가에 있는 이 줄을 찾아서 'Lock'을 추가해 줍니다!
+import Shop from '../components/Shop';
+import PointPurchase from '../components/PointPurchase';
+import SubscriptionPurchase from '../components/SubscriptionPurchase';
 import { Moon, Sparkles, RefreshCw, ArrowRight, Star, Compass, Sun, Eye, ChevronDown, Send, Hexagon, ChevronLeft, ChevronRight, User as UserIcon, MessageCircle, UserPlus, Info, Lock } from 'lucide-react';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(AppState.HOME);
   const [selectedType, setSelectedType] = useState<ReadingType | null>(null);
   const [question, setQuestion] = useState('');
-  const [pickedIndices, setPickedIndices] = useState<number[]>([]);
+  const [pickedIndices, setPickedIndices] = useState<{index: number, isReversed: boolean}[]>([]);
   const [readingResult, setReadingResult] = useState<ReadingResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -27,9 +30,7 @@ const App: React.FC = () => {
   const [selectedDeck, setSelectedDeck] = useState<TarotDeck>(TAROT_DECKS[0]);
   const [regData, setRegData] = useState({ name: '', title: '', description: '', specialization: '' });
 
-  // ✨ DB 카드 장바구니
   const [dbCards, setDbCards] = useState<any[]>([]);
-  // ✨ 마이너 아르카나 탭 상태
   const [minorSuitTab, setMinorSuitTab] = useState<'All' | 'Wands' | 'Swords' | 'Cups' | 'Pentacles'>('All');
 
   const spreadSectionRef = useRef<HTMLDivElement>(null);
@@ -42,7 +43,6 @@ const App: React.FC = () => {
 
   const TOTAL_DECK_SIZE = 78;
 
-  // ✨ DB에서 78장 카드 가져오기
   useEffect(() => {
     const fetchCards = async () => {
       try {
@@ -59,26 +59,19 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (chatEndRef.current) {
+    if (chatMessages.length > 0 && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages]);
-
-// ✨ DB 카드의 고유 번호(number)를 보고 속성을 완벽하게 판별하는 함수!
+  
   const getCardSuit = (num: number) => {
-    // 번호가 100보다 작으면 무조건 메이저 아르카나 (0~21)
     if (num < 100) return 'Major';
-
-    // 번호를 글자로 바꾸고, 맨 앞 2자리(prefix)만 쏙 뽑아냅니다.
     const prefix = String(num).substring(0, 2);
-
-    // 맨 앞 2자리에 따라 마이너 아르카나 속성을 기가 막히게 분류합니다.
     if (prefix === '10') return 'Wands';
     if (prefix === '11') return 'Cups';
     if (prefix === '12') return 'Swords';
     if (prefix === '13') return 'Pentacles';
-
-    return 'Major'; // 혹시 모를 예외 처리
+    return 'Major';
   };
 
   const startReading = (type: ReadingType) => {
@@ -86,63 +79,22 @@ const App: React.FC = () => {
     setState(AppState.QUESTION_INPUT);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
+  
   const handlePickCard = (index: number) => {
     if (!selectedType) return;
     const maxCards = selectedType === ReadingType.YES_NO ? 1 : 3;
     
     setPickedIndices(prev => {
-      if (prev.includes(index)) {
-        return prev.filter(i => i !== index);
+      if (prev.find(p => p.index === index)) {
+        return prev.filter(p => p.index !== index);
       }
       if (prev.length < maxCards) {
-        return [...prev, index];
+        return [...prev, { index, isReversed: Math.random() < 0.5 }];
       }
       return prev;
     });
   };
-
-const handleStartReading = async () => {
-  if (!question.trim() || pickedIndices.length === 0) return; // 유효성 검사 추가
   
-  setIsLoading(true);
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: [{ role: 'user', content: question }],
-        // 🌟 사용자가 클릭한 순서대로 담긴 배열을 서버로 전송
-        selectedCards: pickedIndices 
-      })
-    });
-    
-    const data = await res.json();
-
-    if (data.cards && data.cards.length > 0) {
-      // 🌟 [핵심] 서버가 정렬하고 방향(orientation)을 정해준 데이터를 상태에 저장
-      setReadingResult({
-        type: selectedType || ReadingType.PAST_PRESENT_FUTURE,
-        interpretation: data.text,
-        // 🌟 새 배열로 복사해서 리렌더링(이미지 회전)을 강제로 유도합니다.
-        cards: [...data.cards], 
-        question: question
-      });
-      
-      // 채팅 내역 초기화 및 결과 화면으로 전환
-      setChatMessages([{ role: 'assistant', content: data.text }]);
-      setState(AppState.RESULT);
-    } else {
-      console.error("서버에서 카드 데이터를 받지 못했습니다.");
-    }
-  } catch (error) {
-    console.error("해석 시작 에러:", error);
-    alert("운명의 실타래를 읽는 중 오류가 발생했습니다. 다시 시도해주세요.");
-  } finally {
-    setIsLoading(false);
-  }
-};
-
   const finalizeSelection = async () => {
     if (!selectedType) return;
     const requiredCards = selectedType === ReadingType.YES_NO ? 1 : 3;
@@ -151,23 +103,28 @@ const handleStartReading = async () => {
     setIsLoading(true);
     setState(AppState.RESULT);
 
-    // ✨ DB 카드 사용 및 섞기
-    const shuffled = [...dbCards].sort(() => 0.5 - Math.random());
-// 🌟 2. [수정] 선택된 카드들에 각각 랜덤으로 방향(정/역) 부여하기
-    const finalPickedCards = shuffled.slice(0, pickedIndices.length).map(card => ({
-    ...card,
-    // 50% 확률로 reversed 또는 upright 부여
-    orientation: Math.random() > 0.5 ? 'reversed' : 'upright'
-  }));
-
     try {
-      const interpretation = await interpretTarot(question, selectedType, finalPickedCards);
-      setReadingResult({
-        question,
-        type: selectedType,
-        cards: finalPickedCards,
-        interpretation: interpretation || '운명을 읽는 도중 오류가 발생했습니다.'
+      const res = await fetch('/api/tarot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: question }],
+          selectedCards: pickedIndices
+        })
       });
+
+      const data = await res.json();
+      console.log('서버에서 받은 cards:', data.cards?.map((c: any) => ({ name: c.name, orientation: c.orientation })));
+
+      if (data.cards && data.cards.length > 0) {
+        setReadingResult({
+          question,
+          type: selectedType,
+          cards: data.cards,
+          interpretation: data.text
+        });
+        setChatMessages([]);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -219,7 +176,21 @@ const handleStartReading = async () => {
     setState(AppState.LIVE_CONSULTATION);
   };
 
-  // ✨ 메이저/마이너 아르카나 도감 렌더링
+  const handlePurchasePoints = (pointsToAdd: number) => {
+    if (user) {
+      setUser({ ...user, points: (user.points || 0) + pointsToAdd });
+      alert(`${pointsToAdd.toLocaleString()} 포인트가 충전되었습니다.`);
+      setState(AppState.SHOP);
+    }
+  };
+
+  const handleSubscribe = (pkg: any) => {
+    if (user) {
+      alert(`${pkg.name} 구독이 시작되었습니다. 매월 ₩${pkg.price.toLocaleString()}이 결제됩니다.`);
+      setState(AppState.SHOP);
+    }
+  };
+
   const renderArcanaView = (type: 'Major' | 'Minor') => (
     <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen pb-40">
       <StreamUIOverlay />
@@ -281,7 +252,6 @@ const handleStartReading = async () => {
     </div>
   );
 
-  // ✨ 덱 테마 선택 렌더링
   const renderDeckSelection = () => (
     <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen pb-40">
       <StreamUIOverlay />
@@ -292,14 +262,13 @@ const handleStartReading = async () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 max-w-5xl mx-auto">
         {TAROT_DECKS.map((deck) => {
-          // ✨ 핵심 로직: 클래식 덱(deck-classic)이 아니면 '준비 중(Coming Soon)' 상태로 만듭니다.
           const isComingSoon = deck.id !== 'deck-classic';
 
           return (
             <div 
               key={deck.id}
               onClick={() => {
-                if (isComingSoon) return; // 💡 준비 중인 덱은 클릭을 원천 차단!
+                if (isComingSoon) return;
                 setSelectedDeck(deck);
                 setState(AppState.HOME);
               }}
@@ -321,13 +290,11 @@ const handleStartReading = async () => {
                 <div className="w-full aspect-[2/3] mb-6 overflow-hidden relative bg-[#0a0812] border border-rose-gold/10 flex flex-col items-center justify-center">
                   
                   {isComingSoon ? (
-                    // 🔒 준비 중인 덱의 UI (자물쇠 아이콘 + Coming Soon)
                     <div className="flex flex-col items-center justify-center text-slate-600 gap-4">
                       <Lock className="w-8 h-8 opacity-30" />
                       <span className="font-cinzel tracking-[0.3em] text-[10px] uppercase opacity-50">Coming Soon</span>
                     </div>
                   ) : (
-                    // 🔓 선택 가능한 덱의 UI (정상적인 이미지)
                     <>
                       <img 
                         src={deck.thumbnail} 
@@ -513,96 +480,93 @@ const handleStartReading = async () => {
     </div>
   );
 
-const renderLiveConsultation = () => (
-  <div className="pt-32 px-6 max-w-6xl mx-auto min-h-screen pb-40">
-    <StreamUIOverlay />
-    
-    <div className="flex flex-col lg:flex-row gap-10 h-[auto] lg:h-[800px]">
-      {/* 왼쪽: 마스터 프로필 카드 */}
-      <div className="lg:w-1/3 flex flex-col gap-6">
-        <StreamFrame className="h-full flex flex-col p-0">
-          <div className="relative aspect-[3/4] overflow-hidden grayscale">
-            <img src={selectedMaster?.image} alt={selectedMaster?.name} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
-            <div className="absolute bottom-6 left-6 right-6">
-              <h3 className="font-cinzel text-3xl text-white tracking-widest uppercase">{selectedMaster?.name}</h3>
-              <p className="font-cinzel text-xs text-rose-gold tracking-[0.3em] uppercase">{selectedMaster?.title}</p>
-            </div>
-          </div>
-          <div className="p-8 space-y-8 flex-1 overflow-y-auto no-scrollbar">
-            <div>
-              <h4 className="font-cinzel text-[10px] text-slate-500 tracking-[0.4em] uppercase mb-4">Specializations</h4>
-              <div className="flex flex-wrap gap-2">
-                {selectedMaster?.specialization.map((spec, i) => (
-                  <span key={i} className="px-3 py-1 border border-rose-gold/20 text-[10px] font-cinzel text-rose-gold uppercase">{spec}</span>
-                ))}
+  const renderLiveConsultation = () => (
+    <div className="pt-32 px-6 max-w-6xl mx-auto min-h-screen pb-40">
+      <StreamUIOverlay />
+      
+      <div className="flex flex-col lg:flex-row gap-10 h-[auto] lg:h-[800px]">
+        <div className="lg:w-1/3 flex flex-col gap-6">
+          <StreamFrame className="h-full flex flex-col p-0">
+            <div className="relative aspect-[3/4] overflow-hidden grayscale">
+              <img src={selectedMaster?.image} alt={selectedMaster?.name} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6">
+                <h3 className="font-cinzel text-3xl text-white tracking-widest uppercase">{selectedMaster?.name}</h3>
+                <p className="font-cinzel text-xs text-rose-gold tracking-[0.3em] uppercase">{selectedMaster?.title}</p>
               </div>
             </div>
-            <div>
-              <h4 className="font-cinzel text-[10px] text-slate-500 tracking-[0.4em] uppercase mb-4">Expert Philosophy</h4>
-              <p className="font-playfair text-slate-300 italic text-sm leading-relaxed">{selectedMaster?.description}</p>
+            <div className="p-8 space-y-8 flex-1 overflow-y-auto no-scrollbar">
+              <div>
+                <h4 className="font-cinzel text-[10px] text-slate-500 tracking-[0.4em] uppercase mb-4">Specializations</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedMaster?.specialization.map((spec, i) => (
+                    <span key={i} className="px-3 py-1 border border-rose-gold/20 text-[10px] font-cinzel text-rose-gold uppercase">{spec}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-cinzel text-[10px] text-slate-500 tracking-[0.4em] uppercase mb-4">Expert Philosophy</h4>
+                <p className="font-playfair text-slate-300 italic text-sm leading-relaxed">{selectedMaster?.description}</p>
+              </div>
             </div>
-          </div>
-        </StreamFrame>
-      </div>
+          </StreamFrame>
+        </div>
 
-      {/* 오른쪽: 실시간 채팅 영역 */}
-      <div className="lg:w-2/3 flex flex-col gap-6 min-h-[500px]">
-        <StreamFrame className="flex-1 flex flex-col h-full bg-slate-950/40 relative">
-          <div className="p-6 border-b border-rose-gold/20 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="font-cinzel text-xs text-white tracking-widest uppercase">Live Consultation Active</span>
+        <div className="lg:w-2/3 flex flex-col gap-6 min-h-[500px]">
+          <StreamFrame className="flex-1 flex flex-col h-full bg-slate-950/40 relative">
+            <div className="p-6 border-b border-rose-gold/20 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="font-cinzel text-xs text-white tracking-widest uppercase">Live Consultation Active</span>
+              </div>
+              <button onClick={() => setState(AppState.MASTERS_VIEW)} className="text-[10px] font-cinzel text-slate-500 hover:text-white uppercase tracking-widest">상담 종료</button>
             </div>
-            <button onClick={() => setState(AppState.MASTERS_VIEW)} className="text-[10px] font-cinzel text-slate-500 hover:text-white uppercase tracking-widest">상담 종료</button>
-          </div>
 
-          <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 no-scrollbar">
-            {chatMessages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-500`}>
-                <div className={`max-w-[85%] flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  {msg.role !== 'user' && <div className="w-10 h-10 rounded-full border border-rose-gold/30 bg-white/5 flex-shrink-0" />}
-                  <div className={`p-6 ${msg.role === 'user' ? 'bg-rose-gold/10 border border-rose-gold/30 rounded-t-2xl rounded-bl-2xl text-amber-50' : 'bg-slate-900/80 border border-white/5 rounded-t-2xl rounded-br-2xl text-slate-200'}`}>
-                    <p className="font-playfair text-lg leading-relaxed">{msg.content}</p>
+            <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 no-scrollbar">
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-500`}>
+                  <div className={`max-w-[85%] flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {msg.role !== 'user' && <div className="w-10 h-10 rounded-full border border-rose-gold/30 bg-white/5 flex-shrink-0" />}
+                    <div className={`p-6 ${msg.role === 'user' ? 'bg-rose-gold/10 border border-rose-gold/30 rounded-t-2xl rounded-bl-2xl text-amber-50' : 'bg-slate-900/80 border border-white/5 rounded-t-2xl rounded-br-2xl text-slate-200'}`}>
+                      <p className="font-playfair text-lg leading-relaxed">{msg.content}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="p-4 bg-slate-900/40 rounded-full border border-white/5">
-                  <RefreshCw className="w-4 h-4 text-rose-gold animate-spin" />
+              ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="p-4 bg-slate-900/40 rounded-full border border-white/5">
+                    <RefreshCw className="w-4 h-4 text-rose-gold animate-spin" />
+                  </div>
                 </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          <div className="p-6 border-t border-rose-gold/20">
-            <div className="relative">
-              <input 
-                type="text" 
-                value={userInput} 
-                onChange={(e) => setUserInput(e.target.value)} 
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(true)}
-                placeholder="마스터에게 고민을 털어놓으세요..." 
-                className="w-full bg-slate-900/60 border border-rose-gold/30 rounded-2xl px-6 py-4 md:px-8 md:py-5 text-white font-playfair text-lg md:text-xl focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-700 shadow-inner"
-              />
-              <button 
-                onClick={() => handleSendMessage(true)} 
-                className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-rose-gold rounded-xl text-slate-950 hover:bg-white transition-colors flex items-center justify-center shadow-lg"
-              >
-                <Send className="w-5 h-5 md:w-6 md:h-6" />
-              </button>
+              )}
+              <div ref={chatEndRef} />
             </div>
-          </div>
-        </StreamFrame>
+
+            <div className="p-6 border-t border-rose-gold/20">
+              <div className="relative">
+                <input 
+                  type="text" 
+                  value={userInput} 
+                  onChange={(e) => setUserInput(e.target.value)} 
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(true)}
+                  placeholder="마스터에게 고민을 털어놓으세요..." 
+                  className="w-full bg-slate-900/60 border border-rose-gold/30 rounded-2xl px-6 py-4 md:px-8 md:py-5 text-white font-playfair text-lg md:text-xl focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-700 shadow-inner"
+                />
+                <button 
+                  onClick={() => handleSendMessage(true)} 
+                  className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-rose-gold rounded-xl text-slate-950 hover:bg-white transition-colors flex items-center justify-center shadow-lg"
+                >
+                  <Send className="w-5 h-5 md:w-6 md:h-6" />
+                </button>
+              </div>
+            </div>
+          </StreamFrame>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 
-// 1. 보조 조언 섹션 (이름을 더 직관적으로 변경)
   const renderSecondaryInfo = () => {
     if (isLoading || !readingResult) return null;
 
@@ -668,63 +632,101 @@ const renderLiveConsultation = () => (
     );
   };
 
-  // 💬 AI 채팅 메시지 전송 함수
+// page.tsx의 handleSendMessage 함수 수정
+
 const handleSendMessage = async (isConsultationMode: boolean = false) => {
-    // 1. 유효성 검사: 입력값이 없거나 이미 로딩 중이면 실행하지 않음
-    if (!userInput.trim() || isLoading) return;
+  if (!userInput.trim() || isLoading) return;
 
-    const userContent = userInput.trim();
-    const newMsg: ChatMessage = { role: 'user', content: userContent };
-    
-    // 사용자 메시지를 즉시 화면에 반영
-    const updatedMessages = [...chatMessages, newMsg];
-    setChatMessages(updatedMessages);
-    setUserInput(''); 
-    setIsLoading(true);
+  const userContent = userInput.trim();
+  const newMsg: ChatMessage = { role: 'user', content: userContent };
+  
+  const updatedMessages = [...chatMessages, newMsg];
+  setChatMessages(updatedMessages);
+  setUserInput(''); 
+  setIsLoading(true);
 
-    try {
-      // 2. 백엔드(route.ts) API 호출
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // Gemini 규격에 맞게 role 변환 (user/model)
-          messages: updatedMessages.map(m => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            content: m.content
-          })),
-          // 사용자가 뽑은 카드 번호 배열 전달
-          selectedCards: pickedIndices 
-        })
-      });
+  try {
+    const res = await fetch('/api/tarot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: updatedMessages.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          content: m.content
+        })),
+        selectedCards: pickedIndices
+      })
+    });
 
-      const data = await res.json();
-
-      if (data.text) {
-        // 3. 채팅창에 AI 답변 추가
-        setChatMessages(prev => [...prev, { role: 'assistant', content: data.text }]);
-        
-        // 🌟 [핵심] 서버에서 새로 결정된 카드 데이터(방향 정보 포함)가 왔을 때
-        if (data.cards && data.cards.length > 0) {
-          setReadingResult((prev: any) => ({
-            ...prev,
-            interpretation: data.text, // 최신 해석으로 교체
-            cards: data.cards          // 👈 여기서 'reversed' 정보가 포함된 카드로 갈아끼움!
-          }));
-        }
-      }
-    } catch (error) {
-      console.error("채팅 전송 에러:", error);
-    } finally {
-      setIsLoading(true); // 로딩 종료
-      setIsLoading(false); 
-      
-      // 4. 답변이 오면 채팅창을 가장 아래로 부드럽게 스크롤
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+    // ✅ 스트리밍 방식으로 응답 처리
+    const reader = res.body?.getReader();
+    if (!reader) {
+      throw new Error('응답 스트림을 읽을 수 없습니다');
     }
-  };
+
+    const decoder = new TextDecoder('utf-8');
+    let aiText = '';
+    let assistantMsgAdded = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (done) break;
+
+      // 스트리밍된 텍스트 디코딩
+      const chunk = decoder.decode(value, { stream: true });
+      aiText += chunk;
+
+      // AI 메시지가 없으면 먼저 추가
+      if (!assistantMsgAdded) {
+        setChatMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: aiText }
+        ]);
+        assistantMsgAdded = true;
+      } else {
+        // 기존 AI 메시지 업데이트 (실시간으로 글자가 추가됨)
+        setChatMessages(prev => {
+          const updated = [...prev];
+          const lastMsg = updated[updated.length - 1];
+          if (lastMsg.role === 'assistant') {
+            updated[updated.length - 1] = {
+              ...lastMsg,
+              content: aiText
+            };
+          }
+          return updated;
+        });
+      }
+    }
+
+    // 최종 전체 텍스트로 한 번 더 업데이트
+    setChatMessages(prev => {
+      const updated = [...prev];
+      const lastMsg = updated[updated.length - 1];
+      if (lastMsg.role === 'assistant') {
+        updated[updated.length - 1] = {
+          ...lastMsg,
+          content: aiText
+        };
+      }
+      return updated;
+    });
+
+  } catch (error) {
+    console.error("채팅 전송 에러:", error);
+    setChatMessages(prev => [
+      ...prev,
+      { role: 'assistant', content: '요청 처리 중 오류가 발생했습니다.' }
+    ]);
+  } finally {
+    setIsLoading(false);
+    
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  }
+};
 
   return (
     <Header 
@@ -735,8 +737,13 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
         setTimeout(() => deckSectionRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
       }} 
       onMastersClick={() => setState(AppState.MASTERS_VIEW)}
+      onMyPageClick={() => setState(AppState.MY_PAGE)}
       onLoginClick={() => setIsLoginModalOpen(true)} 
-      onLogout={() => setUser(null)}
+      onLogout={() => {
+        setUser(null);
+        setState(AppState.HOME);
+      }}
+      onShopClick={() => setState(AppState.SHOP)}
     >
       <div className="relative">
         {state === AppState.HOME && (
@@ -758,6 +765,33 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
         {state === AppState.MASTERS_VIEW && renderMasters()}
         {state === AppState.MASTER_REGISTRATION && renderMasterRegistration()}
         {state === AppState.LIVE_CONSULTATION && renderLiveConsultation()}
+        {state === AppState.MY_PAGE && (
+          <MyPageContent 
+            user={user}
+            selectedDeck={selectedDeck}
+            onUpdateUser={(updatedUser) => setUser(updatedUser)}
+          />
+        )}
+        {state === AppState.SHOP && (
+          <Shop 
+            onPointPurchaseClick={() => setState(AppState.POINT_PURCHASE)}
+            onSubscriptionPurchaseClick={() => setState(AppState.SUBSCRIPTION_PURCHASE)}
+          />
+        )}
+        {state === AppState.POINT_PURCHASE && (
+          <PointPurchase 
+            packages={POINT_PACKAGES}
+            onBack={() => setState(AppState.SHOP)}
+            onPurchase={handlePurchasePoints}
+          />
+        )}
+        {state === AppState.SUBSCRIPTION_PURCHASE && (
+          <SubscriptionPurchase 
+            packages={SUBSCRIPTION_PACKAGES}
+            onBack={() => setState(AppState.SHOP)}
+            onSubscribe={handleSubscribe}
+          />
+        )}
         
         {state === AppState.QUESTION_INPUT && (
           <div className="pt-40 px-6 max-w-4xl mx-auto flex flex-col items-center min-h-screen">
@@ -809,8 +843,8 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
                   style={{ scrollSnapType: 'x proximity' }}
                 >
                   {Array.from({ length: TOTAL_DECK_SIZE }).map((_, idx) => {
-                    const isPicked = pickedIndices.includes(idx);
-                    const pickOrder = pickedIndices.indexOf(idx) + 1;
+                    const isPicked = pickedIndices.find(p => p.index === idx);
+                    const pickOrder = pickedIndices.findIndex(p => p.index === idx) + 1;
                     
                     return (
                       <div 
@@ -881,9 +915,13 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
           />
         )}
       </div>
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onLogin={(email) => setUser({ id: 'u1', name: email.split('@')[0], email })} />
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+        onLogin={(user) => setUser(user)}
+      />
     </Header>
   );
 };
 
-export default App;	
+export default App;

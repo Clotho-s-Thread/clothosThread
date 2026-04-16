@@ -18,6 +18,7 @@ datasource db {
 // NextAuth(로그인 라이브러리)가 권장하는 표준 구조를 따릅니다.
 model User {
   id            String    @id @default(cuid()) // 보안과 확장성을 위해 숫자(Int) 대신 문자열(CUID) ID 사용
+  password      String?
   name          String?   // 사용자 닉네임
   email         String?   @unique // 이메일 (고유값)
   emailVerified DateTime? // 이메일 인증 여부

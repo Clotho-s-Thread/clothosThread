@@ -1,7 +1,7 @@
 'use client'; 
 
 import React, { useState, useEffect } from 'react';
-import { LogIn, User as UserIcon, LogOut, Star, Users } from 'lucide-react';
+import { LogIn, User as UserIcon, LogOut, Star, Users, ShoppingBag, Sparkles } from 'lucide-react';
 import { User } from '../types/types'; 
 
 interface LayoutProps {
@@ -10,8 +10,10 @@ interface LayoutProps {
   onHomeClick: () => void;
   onDeckClick: () => void;
   onMastersClick: () => void;
+  onMyPageClick: () => void;
   onLoginClick: () => void;
   onLogout: () => void;
+  onShopClick: () => void;
 }
 
 export const Header: React.FC<LayoutProps> = ({ 
@@ -20,7 +22,9 @@ export const Header: React.FC<LayoutProps> = ({
   onHomeClick, 
   onDeckClick, 
   onMastersClick,
+  onMyPageClick,
   onLoginClick,
+  onShopClick,
   onLogout 
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -68,6 +72,28 @@ export const Header: React.FC<LayoutProps> = ({
               <span className="hidden sm:inline">전문가 상담</span>
             </button>
             
+            {/* 로그인 후에만 상점 버튼과 포인트 표시 */}
+            {user && (
+              <>
+                <button 
+                  onClick={onShopClick}
+                  className="text-white/40 hover:text-[#c58e71] transition-colors uppercase flex items-center gap-2 font-bold"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  <span className="hidden sm:inline">상점</span>
+                </button>
+
+                {/* 포인트 표시 */}
+                <div className="flex items-center gap-3 px-4 py-2 bg-[#c58e711a] border border-[#c58e7133] rounded-lg hover:border-[#c58e71] transition-all duration-300 group/points">
+                  <Sparkles className="w-4 h-4 text-[#c58e71] group-hover/points:animate-spin" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-500 font-cinzel tracking-widest uppercase">포인트</span>
+                    <span className="text-sm font-bold text-[#c58e71]">{(user.points || 0).toLocaleString()} P</span>
+                  </div>
+                </div>
+              </>
+            )}
+            
             {user ? (
               <div className="relative">
                 <button 
@@ -89,7 +115,21 @@ export const Header: React.FC<LayoutProps> = ({
                     <div className="px-6 py-4 border-b border-[#c58e711a] mb-2">
                       <p className="text-[10px] text-slate-600 font-cinzel mb-2 tracking-widest uppercase">Consultant</p>
                       <p className="text-xs text-[#c58e71] font-cinzel truncate">{user.email}</p>
+                      <p className="text-xs text-[#c58e71]/60 font-cinzel mt-2">
+                        포인트: <span className="text-[#c58e71]">{(user.points || 0).toLocaleString()} P</span>
+                      </p>
                     </div>
+                    
+                    <button 
+                      onClick={() => {
+                        onMyPageClick();
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full px-6 py-3 text-left text-[#c58e71] hover:bg-[#c58e711a] transition-colors font-cinzel flex items-center gap-3 tracking-widest"
+                    >
+                      <UserIcon className="w-3 h-3" /> 마이페이지
+                    </button>
+                    
                     <button 
                       onClick={() => {
                         onLogout();

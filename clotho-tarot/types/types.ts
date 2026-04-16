@@ -11,6 +11,10 @@ export enum AppState {
   LIVE_CONSULTATION = 'LIVE_CONSULTATION',
   MAJOR_ARCANA_VIEW = 'MAJOR_ARCANA_VIEW',
   MINOR_ARCANA_VIEW = 'MINOR_ARCANA_VIEW',
+  MY_PAGE = 'MY_PAGE',
+  SHOP = 'SHOP',
+  POINT_PURCHASE = 'POINT_PURCHASE',
+  SUBSCRIPTION_PURCHASE = 'SUBSCRIPTION_PURCHASE',
   DECK_SELECTION = 'DECK_SELECTION'
 }
 
@@ -60,6 +64,7 @@ export interface User {
   name: string;
   email: string;
   profileImage?: string;
+  points?: number;
 }
 
 // 2. 파일 맨 아래에 타로 덱(테마) 설계도 추가
@@ -70,4 +75,5 @@ export interface TarotDeck {
   description: string;
   thumbnail: string;
   cssFilter: string; // ✨ 이미지를 덱 테마에 맞게 변환해 줄 마법의 필터
+  seed: string;
 }
