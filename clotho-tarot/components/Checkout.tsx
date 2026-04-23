@@ -12,14 +12,13 @@ interface CheckoutProps {
 }
 
 export default function Checkout({ user, onBack }: CheckoutProps) {
-  // ✅ orderId, orderName 등을 직접 생성 (URL 파라미터 없이)
   const [orderId] = useState(() => {
     const timestamp = Date.now();
     const uuid = Math.random().toString(36).substring(2, 10);
     return `points-${timestamp}-${uuid}`;
   });
 
-  const amount = 1000; // 테스트용 금액
+  const amount = 1000;
   const orderName = `CLOTHO 포인트 충전 - 100P`;
   const points = '100';
 
@@ -34,7 +33,6 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
   const [widgets, setWidgets] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ✅ 결제 위젯 초기화
   useEffect(() => {
     async function fetchPaymentWidgets() {
       try {
@@ -60,7 +58,6 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
     fetchPaymentWidgets();
   }, [clientKey]);
 
-  // ✅ 결제 UI 렌더링
   useEffect(() => {
     async function renderPaymentWidgets() {
       if (widgets == null) {
@@ -109,10 +106,19 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
     try {
       console.log('💳 결제 요청 중...');
       
+      // ✅ 결제 정보 저장
+      sessionStorage.setItem('pendingPayment', JSON.stringify({
+        orderId,
+        amount: paymentAmount.value,
+        points,
+        orderName,
+      }));
+      
+      // ✅ successUrl에서 파라미터 제거
       await widgets.requestPayment({
         orderId: orderId,
         orderName: orderName,
-        successUrl: `${baseUrl}/payment/success?orderId=${orderId}&amount=${paymentAmount.value}&points=${points}`,
+        successUrl: `${baseUrl}/payment/success`,
         failUrl: `${baseUrl}/payment/fail`,
         customerEmail: user?.email || 'guest@example.com',
         customerName: user?.name || '고객',
@@ -121,6 +127,7 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
       console.log('✅ 결제 성공');
     } catch (error: any) {
       console.error('❌ 결제 실패:', error);
+      sessionStorage.removeItem('pendingPayment');
       
       if (error.code !== 'USER_CANCELLED') {
         alert(`결제 실패: ${error.message || '다시 시도해주세요'}`);
@@ -128,6 +135,8 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
     }
   };
 
+  // ... 나머지 코드는 동일
+  
   if (isLoading) {
     return (
       <div className="relative min-h-screen flex items-center justify-center">
