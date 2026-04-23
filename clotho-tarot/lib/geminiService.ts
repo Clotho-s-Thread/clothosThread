@@ -27,8 +27,8 @@ export const interpretTarot = async (question: string, type: ReadingType, cards:
 
     const data = await response.json();
     
-    // 🚨 주의: 서버팀이 완성된 답변을 'text', 'reply', 'answer' 중 어떤 이름으로 보내는지 확인이 필요합니다!
-    return data.text || data.reply || data.answer || "해석을 불러오지 못했습니다.";
+    // ✅ 서버에서 'text' 필드로 응답합니다
+    return data.text || "해석을 불러오지 못했습니다.";
 
   } catch (error) {
     console.error("타로 해석 요청 실패:", error);
@@ -57,7 +57,9 @@ export const chatAboutReading = async (messages: any[], newMsg: string, context:
     }
 
     const data = await response.json();
-    return data.text || data.reply || data.answer || "응답을 불러오지 못했습니다.";
+    
+    // ✅ 서버에서 'text' 필드로 응답합니다
+    return data.text || "응답을 불러오지 못했습니다.";
 
   } catch (error) {
     console.error("채팅 요청 실패:", error);
