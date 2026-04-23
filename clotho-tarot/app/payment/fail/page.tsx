@@ -2,11 +2,12 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
 import StreamFrame from '@/components/StreamFrame';
 import StreamUIOverlay from '@/components/StreamUIOverlay';
 import { AlertCircle, Home, RotateCcw } from 'lucide-react';
 
-export default function FailPage() {
+function FailPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -104,5 +105,13 @@ export default function FailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function FailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <FailPageContent />
+    </Suspense>
   );
 }
