@@ -12,6 +12,7 @@ import TarotResult from "../components/TarotResult";
 import HomeView from '../features/home/HomeView';
 import Shop from '../components/Shop';
 import PointPurchase from '../components/PointPurchase';
+import Checkout from '../components/Checkout';
 import SubscriptionPurchase from '../components/SubscriptionPurchase';
 import { Moon, Sparkles, RefreshCw, ArrowRight, Star, Compass, Sun, Eye, ChevronDown, Send, Hexagon, ChevronLeft, ChevronRight, User as UserIcon, MessageCircle, UserPlus, Info, Lock } from 'lucide-react';
 
@@ -42,6 +43,21 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
 
   const TOTAL_DECK_SIZE = 78;
+
+  // 페이지 로드 시 localStorage에서 사용자 정보 복원
+useEffect(() => {
+  const savedUser = localStorage.getItem('user');
+  if (savedUser) {
+    try {
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+      console.log('✅ 저장된 사용자 정보 복원됨:', parsedUser.name);
+    } catch (error) {
+      console.error('저장된 사용자 정보 파싱 실패:', error);
+      localStorage.removeItem('user');
+    }
+  }
+}, []);
 
   useEffect(() => {
     const fetchCards = async () => {
@@ -176,12 +192,24 @@ const App: React.FC = () => {
     setState(AppState.LIVE_CONSULTATION);
   };
 
-  const handlePurchasePoints = (pointsToAdd: number) => {
-    if (user) {
-      setUser({ ...user, points: (user.points || 0) + pointsToAdd });
-      alert(`${pointsToAdd.toLocaleString()} 포인트가 충전되었습니다.`);
-      setState(AppState.SHOP);
-    }
+const handlePurchasePoints = (pointsToAdd: number) => {
+  if (user) {
+    const updatedUser = { ...user, points: (user.points || 0) + pointsToAdd };
+    setUser(updatedUser);
+    // ✅ localStorage에 업데이트된 사용자 정보 저장
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    console.log('✅ 포인트 충전:', pointsToAdd, '포인트 추가됨');
+    alert(`${pointsToAdd.toLocaleString()} 포인트가 충전되었습니다.`);
+    setState(AppState.SHOP);
+  }
+};
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('email');
+    setUser(null);
+    setState(AppState.HOME);
+    console.log('✅ 로그아웃 완료');
   };
 
   const handleSubscribe = (pkg: any) => {
@@ -731,6 +759,7 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
   return (
     <Header 
       user={user} 
+      
       onHomeClick={resetReading} 
       onDeckClick={() => {
         setState(AppState.HOME);
@@ -739,10 +768,7 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
       onMastersClick={() => setState(AppState.MASTERS_VIEW)}
       onMyPageClick={() => setState(AppState.MY_PAGE)}
       onLoginClick={() => setIsLoginModalOpen(true)} 
-      onLogout={() => {
-        setUser(null);
-        setState(AppState.HOME);
-      }}
+      onLogout={handleLogout}  // ✅ 이 줄 수정
       onShopClick={() => setState(AppState.SHOP)}
     >
       <div className="relative">
@@ -782,7 +808,15 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
           <PointPurchase 
             packages={POINT_PACKAGES}
             onBack={() => setState(AppState.SHOP)}
-            onPurchase={handlePurchasePoints}
+            onPurchase={(points) => {
+              // ✅ 0이 아닐 때만 포인트 추가 (Toss 검증 후)
+              if (points > 0) {
+                handlePurchasePoints(points);
+              }
+              // ✅ Checkout 페이지로 이동
+              setState(AppState.CHECKOUT);
+            }}
+            user={user}
           />
         )}
         {state === AppState.SUBSCRIPTION_PURCHASE && (
@@ -793,6 +827,13 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
           />
         )}
         
+        {state === AppState.CHECKOUT && (
+          <Checkout 
+            user={user}
+            onBack={() => setState(AppState.SHOP)}
+          />
+        )}
+
         {state === AppState.QUESTION_INPUT && (
           <div className="pt-40 px-6 max-w-4xl mx-auto flex flex-col items-center min-h-screen">
              <StreamUIOverlay />
@@ -918,7 +959,12 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
       <LoginModal 
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)} 
-        onLogin={(user) => setUser(user)}
+        onLogin={(user) => {
+          setUser(user);
+          // ✅ 로그인 성공 시 localStorage에 저장
+          localStorage.setItem('user', JSON.stringify(user));
+          console.log('✅ 사용자 로그인 및 저장:', user.name);
+        }}
       />
     </Header>
   );
