@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Gemini 모델 초기화
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
     // 프롬프트 작성
     const systemPrompt = `당신은 신비로운 타로 카드 해석가입니다. 
