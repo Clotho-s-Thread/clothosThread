@@ -23,12 +23,13 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
   const points = '100';
 
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || '';
-  let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+  let baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || '').trim(); // ✅ 공백 제거
   
   // ✅ 마지막 슬래시 제거 (정규화)
   baseUrl = baseUrl.replace(/\/$/, '');
   
-  console.log('🔍 baseUrl:', baseUrl);
+  console.log('🔍 baseUrl (정규화됨):', baseUrl);
+  console.log('🔍 baseUrl (원본):', process.env.NEXT_PUBLIC_BASE_URL);
 
   const [paymentAmount, setPaymentAmount] = useState({
     currency: "KRW",
@@ -118,11 +119,6 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
     try {
       console.log('💳 결제 요청 중...');
       
-      // ✅ URL 형식 검증
-      if (!baseUrl || !baseUrl.startsWith('http')) {
-        throw new Error(`유효하지 않은 baseUrl: ${baseUrl}`);
-      }
-
       const successUrl = `${baseUrl}/payment/success`;
       const failUrl = `${baseUrl}/payment/fail`;
       
