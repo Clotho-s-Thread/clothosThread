@@ -1,12 +1,14 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import StreamFrame from '@/components/StreamFrame';
 import StreamUIOverlay from '@/components/StreamUIOverlay';
 import { CheckCircle2, Loader, Home } from 'lucide-react';
 
-export default function SuccessPage() {
+// ✅ Suspense 내부에서만 useSearchParams 사용
+function SuccessPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -29,7 +31,6 @@ export default function SuccessPage() {
           paymentKey
         });
 
-        // ✅ Toss 결제 확인 (서버에서 검증) - 경로 수정!
         const response = await fetch('/api/payment', {
           method: 'POST',
           headers: {
@@ -48,7 +49,6 @@ export default function SuccessPage() {
         if (!response.ok) {
           console.error('❌ 결제 확인 실패:', json);
           setError(json.message || '결제 확인 중 오류가 발생했습니다');
-          // 실패 페이지로 이동
           setTimeout(() => {
             router.push(`/payment/fail?message=${json.message || '결제 확인 실패'}&code=${json.code || 'UNKNOWN'}`);
           }, 2000);
@@ -57,23 +57,19 @@ export default function SuccessPage() {
 
         console.log('✅ 결제 확인 완료:', json);
 
-        // ✅ 포인트 실제 추가
         if (points && points !== '0') {
           try {
             const pointsToAdd = parseInt(points);
             
-            // localStorage에서 사용자 정보 가져오기
             const savedUser = localStorage.getItem('user');
             if (savedUser) {
               const user = JSON.parse(savedUser);
               
-              // 포인트 추가
               const updatedUser = {
                 ...user,
                 points: (user.points || 0) + pointsToAdd
               };
               
-              // localStorage 업데이트
               localStorage.setItem('user', JSON.stringify(updatedUser));
               
               console.log('✅ 포인트 추가 완료:', pointsToAdd, '포인트');
@@ -93,7 +89,6 @@ export default function SuccessPage() {
       }
     }
 
-    // 필수 파라미터 확인
     if (!orderId || !amount || !paymentKey) {
       console.error('❌ 필수 파라미터 누락:', { orderId, amount, paymentKey });
       setError('필수 파라미터가 누락되었습니다');
@@ -104,6 +99,8 @@ export default function SuccessPage() {
     confirmPayment();
   }, [orderId, amount, paymentKey, points, router]);
 
+  // ... 나머지 JSX는 동일
+  
   if (isLoading) {
     return (
       <div className="relative min-h-screen flex items-center justify-center pt-32 pb-20 px-6">
@@ -168,14 +165,12 @@ export default function SuccessPage() {
     );
   }
 
-  // ✅ 결제 성공
   return (
     <div className="relative min-h-screen pt-32 pb-20 px-6 flex items-center justify-center">
       <StreamUIOverlay />
       
       <div className="max-w-md w-full relative z-10">
         <StreamFrame className="p-8">
-          {/* 성공 아이콘 */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-[#c58e71]/20 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="w-8 h-8 text-[#c58e71]" />
@@ -188,7 +183,6 @@ export default function SuccessPage() {
             </p>
           </div>
 
-          {/* 결제 정보 */}
           <div className="space-y-4 mb-8 p-6 bg-slate-800/50 border border-[#c58e711a] rounded-xl">
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-500 font-cinzel">주문번호</span>
@@ -224,13 +218,11 @@ export default function SuccessPage() {
             )}
           </div>
 
-          {/* 메시지 */}
           <p className="text-slate-400 text-sm mb-8 text-center font-playfair italic">
             포인트가 즉시 지급되었습니다.<br />
             지금 바로 상담을 이용할 수 있습니다.
           </p>
 
-          {/* 버튼 */}
           <button
             onClick={() => router.push('/')}
             className="w-full py-3 px-6 bg-[#c58e71] text-slate-950 font-cinzel text-sm tracking-widest uppercase rounded-lg hover:bg-white transition-all flex items-center justify-center gap-2"
@@ -245,5 +237,28 @@ export default function SuccessPage() {
         </StreamFrame>
       </div>
     </div>
+  );
+}
+
+// ✅ Suspense로 감싸서 사전 렌더링 오류 방지
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="relative min-h-screen flex items-center justify-center pt-32 pb-20 px-6">
+        <StreamUIOverlay />
+        <div className="max-w-md w-full relative z-10">
+          <StreamFrame className="p-8 text-center">
+            <div className="mb-8">
+              <Loader className="w-8 h-8 text-[#c58e71] animate-spin mx-auto" />
+            </div>
+            <h2 className="font-cinzel text-2xl text-white tracking-widest uppercase mb-2">
+              로딩 중
+            </h2>
+          </StreamFrame>
+        </div>
+      </div>
+    }>
+      <SuccessPageContent />
+    </Suspense>
   );
 }
