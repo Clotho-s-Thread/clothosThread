@@ -130,7 +130,7 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
     try {
       console.log('💳 결제 요청 중...');
       
-      const successUrl = `${baseUrl}/payment/success?orderId=${orderId}&amount=${paymentAmount.value}&points=${points}`;
+      const successUrl = `${baseUrl}/payment/success`;
       const failUrl = `${baseUrl}/payment/fail`;
       
       console.log('📍 successUrl:', successUrl);
