@@ -23,7 +23,12 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
   const points = '100';
 
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || '';
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+  let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+  
+  // ✅ 마지막 슬래시 제거 (정규화)
+  baseUrl = baseUrl.replace(/\/$/, '');
+  
+  console.log('🔍 baseUrl:', baseUrl);
 
   const [paymentAmount, setPaymentAmount] = useState({
     currency: "KRW",
@@ -32,6 +37,13 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
   const [ready, setReady] = useState(false);
   const [widgets, setWidgets] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // 🔍 환경 변수 확인
+  useEffect(() => {
+    console.log('🔍 환경 변수 확인:');
+    console.log('✅ clientKey:', clientKey ? '설정됨' : '❌ 미설정');
+    console.log('✅ baseUrl:', baseUrl || '❌ 미설정');
+  }, [clientKey, baseUrl]);
 
   useEffect(() => {
     async function fetchPaymentWidgets() {
@@ -106,6 +118,17 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
     try {
       console.log('💳 결제 요청 중...');
       
+      // ✅ URL 형식 검증
+      if (!baseUrl || !baseUrl.startsWith('http')) {
+        throw new Error(`유효하지 않은 baseUrl: ${baseUrl}`);
+      }
+
+      const successUrl = `${baseUrl}/payment/success`;
+      const failUrl = `${baseUrl}/payment/fail`;
+      
+      console.log('📍 successUrl:', successUrl);
+      console.log('📍 failUrl:', failUrl);
+      
       // ✅ 결제 정보 저장
       sessionStorage.setItem('pendingPayment', JSON.stringify({
         orderId,
@@ -114,12 +137,11 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
         orderName,
       }));
       
-      // ✅ successUrl에서 파라미터 제거
       await widgets.requestPayment({
         orderId: orderId,
         orderName: orderName,
-        successUrl: `${baseUrl}/payment/success`,
-        failUrl: `${baseUrl}/payment/fail`,
+        successUrl: successUrl,
+        failUrl: failUrl,
         customerEmail: user?.email || 'guest@example.com',
         customerName: user?.name || '고객',
       });
@@ -135,8 +157,6 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
     }
   };
 
-  // ... 나머지 코드는 동일
-  
   if (isLoading) {
     return (
       <div className="relative min-h-screen flex items-center justify-center">
