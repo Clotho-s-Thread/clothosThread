@@ -22,14 +22,9 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
   const orderName = `CLOTHO 포인트 충전 - 100P`;
   const points = '100';
 
-  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || '';
-  let baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || '').trim(); // ✅ 공백 제거
-  
-  // ✅ 마지막 슬래시 제거 (정규화)
-  baseUrl = baseUrl.replace(/\/$/, '');
-  
-  console.log('🔍 baseUrl (정규화됨):', baseUrl);
-  console.log('🔍 baseUrl (원본):', process.env.NEXT_PUBLIC_BASE_URL);
+  // ✅ API에서 가져올 변수들
+  const [clientKey, setClientKey] = useState('');
+  const [baseUrl, setBaseUrl] = useState('');
 
   const [paymentAmount, setPaymentAmount] = useState({
     currency: "KRW",
@@ -39,12 +34,26 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
   const [widgets, setWidgets] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🔍 환경 변수 확인
+  // ✅ API에서 키 가져오기
   useEffect(() => {
-    console.log('🔍 환경 변수 확인:');
-    console.log('✅ clientKey:', clientKey ? '설정됨' : '❌ 미설정');
-    console.log('✅ baseUrl:', baseUrl || '❌ 미설정');
-  }, [clientKey, baseUrl]);
+    async function fetchKeys() {
+      try {
+        const res = await fetch('/api/toss-key');
+        const data = await res.json();
+        
+        setClientKey(data.clientKey);
+        setBaseUrl(data.baseUrl);
+        
+        console.log('🔍 API에서 가져온 키:');
+        console.log('✅ clientKey:', data.clientKey ? '설정됨' : '❌ 미설정');
+        console.log('✅ baseUrl:', data.baseUrl || '❌ 미설정');
+      } catch (error) {
+        console.error('❌ API에서 키 가져오기 실패:', error);
+      }
+    }
+
+    fetchKeys();
+  }, []);
 
   useEffect(() => {
     async function fetchPaymentWidgets() {
@@ -68,7 +77,9 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
       }
     }
 
-    fetchPaymentWidgets();
+    if (clientKey) {
+      fetchPaymentWidgets();
+    }
   }, [clientKey]);
 
   useEffect(() => {
@@ -119,19 +130,11 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
     try {
       console.log('💳 결제 요청 중...');
       
-      const successUrl = `${baseUrl}/payment/success`;
+      const successUrl = `${baseUrl}/payment/success?orderId=${orderId}&amount=${paymentAmount.value}&points=${points}`;
       const failUrl = `${baseUrl}/payment/fail`;
       
       console.log('📍 successUrl:', successUrl);
       console.log('📍 failUrl:', failUrl);
-      
-      // ✅ 결제 정보 저장
-      sessionStorage.setItem('pendingPayment', JSON.stringify({
-        orderId,
-        amount: paymentAmount.value,
-        points,
-        orderName,
-      }));
       
       await widgets.requestPayment({
         orderId: orderId,
@@ -145,7 +148,6 @@ export default function Checkout({ user, onBack }: CheckoutProps) {
       console.log('✅ 결제 성공');
     } catch (error: any) {
       console.error('❌ 결제 실패:', error);
-      sessionStorage.removeItem('pendingPayment');
       
       if (error.code !== 'USER_CANCELLED') {
         alert(`결제 실패: ${error.message || '다시 시도해주세요'}`);
