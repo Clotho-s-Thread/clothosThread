@@ -44,21 +44,26 @@ const App: React.FC = () => {
 
   const TOTAL_DECK_SIZE = 78;
 
-  // 페이지 로드 시 localStorage에서 사용자 정보 복원
-useEffect(() => {
-  const savedUser = localStorage.getItem('user');
-  if (savedUser) {
-    try {
-      const parsedUser = JSON.parse(savedUser);
-      setUser(parsedUser);
-      console.log('✅ 저장된 사용자 정보 복원됨:', parsedUser.name);
-    } catch (error) {
-      console.error('저장된 사용자 정보 파싱 실패:', error);
-      localStorage.removeItem('user');
+  // ==========================================
+  // 📍 useEffect: 페이지 로드 시 사용자 정보 복원
+  // ==========================================
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        console.log('✅ 저장된 사용자 정보 복원됨:', parsedUser.name);
+      } catch (error) {
+        console.error('저장된 사용자 정보 파싱 실패:', error);
+        localStorage.removeItem('user');
+      }
     }
-  }
-}, []);
+  }, []);
 
+  // ==========================================
+  // 📍 useEffect: DB에서 타로 카드 로드
+  // ==========================================
   useEffect(() => {
     const fetchCards = async () => {
       try {
@@ -74,12 +79,18 @@ useEffect(() => {
     fetchCards();
   }, []);
 
+  // ==========================================
+  // 📍 useEffect: 채팅 메시지 스크롤
+  // ==========================================
   useEffect(() => {
     if (chatMessages.length > 0 && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages]);
   
+  // ==========================================
+  // 🛠️ 유틸리티: 카드 슈트 판정
+  // ==========================================
   const getCardSuit = (num: number) => {
     if (num < 100) return 'Major';
     const prefix = String(num).substring(0, 2);
@@ -90,16 +101,324 @@ useEffect(() => {
     return 'Major';
   };
 
+  // ==========================================
+  // 🎯 DB 저장 함수 1️⃣: 타로 읽기 결과 저장
+  // ==========================================
+  const saveReadingResult = async (reading: ReadingResult) => {
+    if (!user) {
+      console.error('❌ 사용자 정보 없음');
+      return null;
+    }
+
+    try {
+      console.log('📤 타로 읽기 결과 저장 시작...');
+      
+      // 1️⃣ API 호출: Reading 테이블에 저장
+      const response = await fetch('/api/readings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: reading.question,
+          spreadType: reading.type === ReadingType.YES_NO ? 'one-card' : 'three-card',
+          fullAnswer: reading.interpretation,
+          userId: user.id,
+          // ReadingCard들 (카드 배치 정보)
+          cards: reading.cards.map((card: any, index: number) => ({
+            cardId: card.id || card.number, // DB 카드 ID
+            position: index + 1, // 1:첫번째, 2:두번째, 3:세번째
+            orientation: card.isReversed ? 'reversed' : 'upright' // 정방향/역방향
+          }))
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`저장 실패: ${response.status}`);
+      }
+
+      const savedReading = await response.json();
+      console.log('✅ 타로 읽기 결과 저장 완료:', savedReading.id);
+      
+      return savedReading;
+    } catch (error) {
+      console.error('❌ 타로 읽기 저장 실패:', error);
+      alert('타로 읽기 결과 저장에 실패했습니다.');
+      return null;
+    }
+  };
+
+  // ==========================================
+  // 🎯 DB 저장 함수 2️⃣: 포인트 충전 & PointLog 저장
+  // ==========================================
+  const handlePurchasePoints = async (pointsToAdd: number) => {
+    if (!user) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      console.log('📤 포인트 충전 시작:', pointsToAdd);
+
+      // 1️⃣ API 호출: User의 point 업데이트 + PointLog 생성
+      const response = await fetch(`/api/users/${user.id}/points`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: pointsToAdd,
+          reason: '포인트 충전' // PointLog의 reason 필드
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`포인트 업데이트 실패: ${response.status}`);
+      }
+
+      const updatedUser = await response.json();
+
+      // 2️⃣ UI 상태 업데이트
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      console.log('✅ 포인트 충전 완료:', pointsToAdd, '포인트');
+      alert(`${pointsToAdd.toLocaleString()} 포인트가 충전되었습니다.`);
+      setState(AppState.SHOP);
+    } catch (error) {
+      console.error('❌ 포인트 충전 실패:', error);
+      alert('포인트 충전에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  // ==========================================
+  // 🎯 DB 저장 함수 3️⃣: 전문가 마스터 등록
+  // ==========================================
+  const handleRegisterMaster = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
+    try {
+      console.log('📤 전문가 등록 시작...');
+
+      // 1️⃣ API 호출: ExpertProfile 생성
+      const response = await fetch('/api/expert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          nickname: regData.name,
+          intro: regData.description,
+          specialty: regData.specialization, // "연애, 재물, 진로" 형태로 저장
+          pricePerChat: 10000 // 기본 상담료
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`전문가 등록 실패: ${response.status}`);
+      }
+
+      const expertProfile = await response.json();
+
+      // 2️⃣ 로컬 마스터 목록 업데이트 (UI용)
+      const newMaster: TarotMaster = {
+        id: `m-${expertProfile.id}`,
+        name: regData.name,
+        title: '타로 마스터',
+        description: regData.description,
+        specialization: regData.specialization.split(',').map(s => s.trim()),
+        image: user?.profileImage || `https://picsum.photos/seed/${regData.name}/300/400`,
+        rating: 5.0,
+        isOnline: true
+      };
+
+      setMasters([newMaster, ...masters]);
+      setState(AppState.MASTERS_VIEW);
+      setRegData({ name: '', title: '', description: '', specialization: '' });
+
+      console.log('✅ 전문가 등록 완료:', expertProfile.id);
+      alert('전문가로 등록되었습니다!');
+    } catch (error) {
+      console.error('❌ 전문가 등록 실패:', error);
+      alert('전문가 등록에 실패했습니다.');
+    }
+  };
+
+  // ==========================================
+  // 🎯 타로 읽기 최종 실행 ✅ 완벽한 디버깅 버전
+  // ==========================================
+  const finalizeSelection = async () => {
+    console.log("🚀 [finalizeSelection] 함수 시작");
+    
+    // ✅ 1️⃣ 필수 데이터 검증
+    if (!selectedType) {
+      console.error("❌ selectedType이 없음");
+      alert("읽기 타입을 선택하세요");
+      return;
+    }
+
+    const requiredCards = selectedType === ReadingType.YES_NO ? 1 : 3;
+    console.log(`📌 필요 카드 수: ${requiredCards}, 선택된 카드 수: ${pickedIndices.length}`);
+
+    if (pickedIndices.length < requiredCards) {
+      console.error(`❌ 카드 부족 (필요: ${requiredCards}, 선택: ${pickedIndices.length})`);
+      alert(`${requiredCards}개의 카드를 선택하세요`);
+      return;
+    }
+
+    if (!question.trim()) {
+      console.error("❌ question이 비어있음");
+      alert("질문을 입력하세요");
+      return;
+    }
+
+    setIsLoading(true);
+    setState(AppState.RESULT);
+
+    try {
+      console.log("📤 [API 요청 준비]");
+
+      // ✅ 2️⃣ 전송할 데이터 구성 및 검증
+      const requestData = {
+        messages: [{ 
+          role: 'user', 
+          content: question.trim() 
+        }],
+        selectedCards: pickedIndices
+      };
+
+      // ✅ 3️⃣ 데이터 상세 로깅
+      console.log("📋 [전송 데이터]");
+      console.log("  question:", question);
+      console.log("  selectedType:", selectedType);
+      console.log("  pickedIndices:", pickedIndices);
+      console.log("  pickedIndices 길이:", pickedIndices.length);
+      
+      // 각 카드 정보 확인
+      pickedIndices.forEach((card, idx) => {
+        console.log(`  카드 ${idx + 1}:`, {
+          index: card.index,
+          isReversed: card.isReversed,
+          type: typeof card.index,
+          reversedType: typeof card.isReversed
+        });
+      });
+
+      // ✅ 4️⃣ JSON 직렬화 가능 여부 확인
+      try {
+        const jsonString = JSON.stringify(requestData);
+        console.log("✅ JSON 직렬화 성공");
+        console.log("📦 JSON 크기:", jsonString.length, "bytes");
+      } catch (jsonError) {
+        console.error("❌ JSON 직렬화 실패:", jsonError);
+        throw new Error("데이터 직렬화 실패");
+      }
+
+      // ✅ 5️⃣ API 호출
+      console.log("🌐 [API 호출 시작]");
+      const res = await fetch('/api/tarot', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      // ✅ 6️⃣ 응답 상태 확인
+      console.log("📥 [API 응답]");
+      console.log("  상태 코드:", res.status);
+      console.log("  상태 텍스트:", res.statusText);
+      console.log("  Content-Type:", res.headers.get('content-type'));
+
+      // ✅ 7️⃣ 응답 본문 파싱
+      let data;
+      try {
+        data = await res.json();
+        console.log("📦 응답 데이터:", data);
+      } catch (parseError) {
+        console.error("❌ JSON 파싱 실패:", parseError);
+        alert("API 응답을 파싱할 수 없습니다");
+        return;
+      }
+
+      // ✅ 8️⃣ 상태 코드별 처리
+      if (!res.ok) {
+        console.error("❌ API 에러 (상태:", res.status + ")");
+        console.error("   에러 메시지:", data.error || data.message);
+        alert(`타로 읽기 실패: ${data.error || '알 수 없는 오류'}`);
+        setState(AppState.QUESTION_INPUT);
+        return;
+      }
+
+      // ✅ 9️⃣ 성공 응답 확인
+      console.log("✅ [API 성공]");
+      if (!data.text) {
+        console.error("❌ 응답에 text 필드가 없음");
+        alert("API 응답이 불완전합니다");
+        return;
+      }
+
+      if (!data.cards || data.cards.length === 0) {
+        console.error("❌ 응답에 cards 필드가 없음");
+        alert("카드 정보가 없습니다");
+        return;
+      }
+
+      // ✅ 🔟 읽기 결과 생성
+      const reading: ReadingResult = {
+        question,
+        type: selectedType,
+        cards: data.cards,
+        interpretation: data.text
+      };
+
+      console.log("✅ [읽기 결과]");
+      console.log("  질문:", reading.question);
+      console.log("  타입:", reading.type);
+      console.log("  카드 수:", reading.cards.length);
+      console.log("  해석 길이:", reading.interpretation.length);
+
+      // ✅ 1️⃣1️⃣ DB 저장 (선택사항)
+      if (user) {
+        const savedReading = await saveReadingResult(reading);
+        if (savedReading) {
+          reading.id = savedReading.id;
+          console.log("✅ DB 저장 완료:", reading.id);
+        }
+      }
+
+      // ✅ 1️⃣2️⃣ 상태 업데이트
+      setReadingResult(reading);
+      setChatMessages([]);
+      console.log("✅ [finalizeSelection] 완료");
+
+    } catch (error) {
+      console.error("❌ [finalizeSelection] 에러:", error);
+      if (error instanceof Error) {
+        console.error("   에러 메시지:", error.message);
+        console.error("   스택:", error.stack);
+      }
+      alert("타로 읽기 중 오류가 발생했습니다");
+      setState(AppState.QUESTION_INPUT);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ==========================================
+  // 🎯 나머지 함수들
+  // ==========================================
+
   const startReading = (type: ReadingType) => {
     setSelectedType(type);
     setState(AppState.QUESTION_INPUT);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  
+
   const handlePickCard = (index: number) => {
     if (!selectedType) return;
     const maxCards = selectedType === ReadingType.YES_NO ? 1 : 3;
-    
+
     setPickedIndices(prev => {
       if (prev.find(p => p.index === index)) {
         return prev.filter(p => p.index !== index);
@@ -109,43 +428,6 @@ useEffect(() => {
       }
       return prev;
     });
-  };
-  
-  const finalizeSelection = async () => {
-    if (!selectedType) return;
-    const requiredCards = selectedType === ReadingType.YES_NO ? 1 : 3;
-    if (pickedIndices.length < requiredCards) return;
-    
-    setIsLoading(true);
-    setState(AppState.RESULT);
-
-    try {
-      const res = await fetch('/api/tarot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: question }],
-          selectedCards: pickedIndices
-        })
-      });
-
-      const data = await res.json();
-      console.log('서버에서 받은 cards:', data.cards?.map((c: any) => ({ name: c.name, orientation: c.orientation })));
-
-      if (data.cards && data.cards.length > 0) {
-        setReadingResult({
-          question,
-          type: selectedType,
-          cards: data.cards,
-          interpretation: data.text
-        });
-        setChatMessages([]);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const resetReading = () => {
@@ -167,23 +449,6 @@ useEffect(() => {
     }
   };
 
-  const handleRegisterMaster = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newMaster: TarotMaster = {
-      id: `m-custom-${Date.now()}`,
-      name: regData.name,
-      title: regData.title,
-      description: regData.description,
-      specialization: regData.specialization.split(',').map(s => s.trim()),
-      image: user?.profileImage || `https://picsum.photos/seed/${regData.name}/300/400`,
-      rating: 5.0,
-      isOnline: true
-    };
-    setMasters([newMaster, ...masters]);
-    setState(AppState.MASTERS_VIEW);
-    setRegData({ name: '', title: '', description: '', specialization: '' });
-  };
-
   const startConsultation = (master: TarotMaster) => {
     setSelectedMaster(master);
     setChatMessages([
@@ -191,18 +456,6 @@ useEffect(() => {
     ]);
     setState(AppState.LIVE_CONSULTATION);
   };
-
-const handlePurchasePoints = (pointsToAdd: number) => {
-  if (user) {
-    const updatedUser = { ...user, points: (user.points || 0) + pointsToAdd };
-    setUser(updatedUser);
-    // ✅ localStorage에 업데이트된 사용자 정보 저장
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    console.log('✅ 포인트 충전:', pointsToAdd, '포인트 추가됨');
-    alert(`${pointsToAdd.toLocaleString()} 포인트가 충전되었습니다.`);
-    setState(AppState.SHOP);
-  }
-};
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -218,6 +471,106 @@ const handlePurchasePoints = (pointsToAdd: number) => {
       setState(AppState.SHOP);
     }
   };
+
+  // ==========================================
+  // 📍 채팅 메시지 전송 (선택사항: 메시지 저장 가능)
+  // ==========================================
+  const handleSendMessage = async (isConsultationMode: boolean = false) => {
+    if (!userInput.trim() || isLoading) return;
+
+    const userContent = userInput.trim();
+    const newMsg: ChatMessage = { role: 'user', content: userContent };
+
+    const updatedMessages = [...chatMessages, newMsg];
+    setChatMessages(updatedMessages);
+    setUserInput('');
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/tarot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: updatedMessages.map(m => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            content: m.content
+          })),
+          selectedCards: pickedIndices
+        })
+      });
+
+      // ✅ 스트리밍 방식으로 응답 처리
+      const reader = res.body?.getReader();
+      if (!reader) {
+        throw new Error('응답 스트림을 읽을 수 없습니다');
+      }
+
+      const decoder = new TextDecoder('utf-8');
+      let aiText = '';
+      let assistantMsgAdded = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        // 스트리밍된 텍스트 디코딩
+        const chunk = decoder.decode(value, { stream: true });
+        aiText += chunk;
+
+        // AI 메시지가 없으면 먼저 추가
+        if (!assistantMsgAdded) {
+          setChatMessages(prev => [
+            ...prev,
+            { role: 'assistant', content: aiText }
+          ]);
+          assistantMsgAdded = true;
+        } else {
+          // 기존 AI 메시지 업데이트 (실시간으로 글자가 추가됨)
+          setChatMessages(prev => {
+            const updated = [...prev];
+            const lastMsg = updated[updated.length - 1];
+            if (lastMsg.role === 'assistant') {
+              updated[updated.length - 1] = {
+                ...lastMsg,
+                content: aiText
+              };
+            }
+            return updated;
+          });
+        }
+      }
+
+      // 최종 전체 텍스트로 한 번 더 업데이트
+      setChatMessages(prev => {
+        const updated = [...prev];
+        const lastMsg = updated[updated.length - 1];
+        if (lastMsg.role === 'assistant') {
+          updated[updated.length - 1] = {
+            ...lastMsg,
+            content: aiText
+          };
+        }
+        return updated;
+      });
+    } catch (error) {
+      console.error('❌ 채팅 전송 에러:', error);
+      setChatMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: '요청 처리 중 오류가 발생했습니다.' }
+      ]);
+    } finally {
+      setIsLoading(false);
+
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  };
+
+  // ==========================================
+  // 🎨 렌더링 함수들
+  // ==========================================
 
   const renderArcanaView = (type: 'Major' | 'Minor') => (
     <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen pb-40">
@@ -263,17 +616,17 @@ const handlePurchasePoints = (pointsToAdd: number) => {
           return cardSuit === minorSuitTab;
         }).map(card => (
           <div key={card.id} className="relative group cursor-pointer aspect-[2/3] overflow-hidden">
-             <div className="absolute inset-0 border border-[#c58e7133] z-10 group-hover:border-rose-gold transition-colors" />
-             <img 
-               src={card.imageUrl} 
-               alt={card.name} 
-               style={{ filter: selectedDeck.cssFilter }} 
-               className="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 scale-110 group-hover:scale-100" 
-             />
-             <div className="absolute bottom-0 inset-x-0 bg-slate-950/90 p-4 text-center transform translate-y-full group-hover:translate-y-0 transition-transform border-t border-rose-gold/20">
-                <p className="font-cinzel text-xs rose-gold-text tracking-widest uppercase mb-1">{card.name}</p>
-                <p className="font-cinzel text-[10px] text-white/60 tracking-widest uppercase">{card.nameKo}</p>
-             </div>
+            <div className="absolute inset-0 border border-[#c58e7133] z-10 group-hover:border-rose-gold transition-colors" />
+            <img 
+              src={card.imageUrl} 
+              alt={card.name} 
+              style={{ filter: selectedDeck.cssFilter }} 
+              className="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 scale-110 group-hover:scale-100" 
+            />
+            <div className="absolute bottom-0 inset-x-0 bg-slate-950/90 p-4 text-center transform translate-y-full group-hover:translate-y-0 transition-transform border-t border-rose-gold/20">
+              <p className="font-cinzel text-xs rose-gold-text tracking-widest uppercase mb-1">{card.name}</p>
+              <p className="font-cinzel text-[10px] text-white/60 tracking-widest uppercase">{card.nameKo}</p>
+            </div>
           </div>
         ))}
       </div>
@@ -377,18 +730,18 @@ const handlePurchasePoints = (pointsToAdd: number) => {
       <div className="text-center mb-16">
         <h2 className="font-cinzel text-3xl md:text-5xl text-white tracking-[0.5em] mb-6 uppercase">천상의 마스터들</h2>
         <div className="flex flex-col items-center gap-6">
-           <div className="flex items-center gap-6">
-              <div className="w-16 md:w-24 h-[1px] bg-[#c58e714d]" />
-              <p className="font-playfair text-slate-400 italic text-xl md:text-2xl">운명을 엮는 마스터들과의 깊은 상담을 시작하세요</p>
-              <div className="w-16 md:w-24 h-[1px] bg-[#c58e714d]" />
-           </div>
-           <button 
-             onClick={() => user ? setState(AppState.MASTER_REGISTRATION) : setIsLoginModalOpen(true)}
-             className="btn-celestial flex items-center gap-3 text-sm px-10 py-3"
-           >
-              <UserPlus className="w-4 h-4" />
-              전문가로 등록하기
-           </button>
+          <div className="flex items-center gap-6">
+            <div className="w-16 md:w-24 h-[1px] bg-[#c58e714d]" />
+            <p className="font-playfair text-slate-400 italic text-xl md:text-2xl">운명을 엮는 마스터들과의 깊은 상담을 시작하세요</p>
+            <div className="w-16 md:w-24 h-[1px] bg-[#c58e714d]" />
+          </div>
+          <button 
+            onClick={() => user ? setState(AppState.MASTER_REGISTRATION) : setIsLoginModalOpen(true)}
+            className="btn-celestial flex items-center gap-3 text-sm px-10 py-3"
+          >
+            <UserPlus className="w-4 h-4" />
+            전문가로 등록하기
+          </button>
         </div>
       </div>
 
@@ -396,42 +749,42 @@ const handlePurchasePoints = (pointsToAdd: number) => {
         {masters.map((master) => (
           <div key={master.id} className="group cursor-pointer">
             <StreamFrame className="h-full flex flex-col items-stretch p-0">
-               <div className="relative aspect-[3/4] overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700">
-                  <img src={master.image} alt={master.name} className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-700" />
-                  <div className={`absolute top-4 right-4 w-3 h-3 rounded-full ${master.isOnline ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 'bg-slate-500'}`} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b1a] via-transparent to-transparent opacity-60" />
-               </div>
-               
-               <div className="p-6 flex flex-col flex-1">
-                  <div className="flex justify-between items-start mb-2">
-                     <h3 className="font-cinzel text-2xl text-white tracking-widest uppercase">{master.name}</h3>
-                     <div className="flex items-center gap-1 rose-gold-text">
-                        <Star className="w-3 h-3 fill-current" />
-                        <span className="text-[10px] font-cinzel">{master.rating}</span>
-                     </div>
+              <div className="relative aspect-[3/4] overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700">
+                <img src={master.image} alt={master.name} className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-700" />
+                <div className={`absolute top-4 right-4 w-3 h-3 rounded-full ${master.isOnline ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 'bg-slate-500'}`} />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b1a] via-transparent to-transparent opacity-60" />
+              </div>
+              
+              <div className="p-6 flex flex-col flex-1">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-cinzel text-2xl text-white tracking-widest uppercase">{master.name}</h3>
+                  <div className="flex items-center gap-1 rose-gold-text">
+                    <Star className="w-3 h-3 fill-current" />
+                    <span className="text-[10px] font-cinzel">{master.rating}</span>
                   </div>
-                  <p className="font-cinzel text-[10px] rose-gold-text tracking-widest uppercase mb-4 opacity-70">{master.title}</p>
-                  
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {master.specialization.map((spec, i) => (
-                      <span key={i} className="text-[9px] font-cinzel tracking-widest text-slate-500 border border-slate-800 px-2 py-1 uppercase">
-                        {spec}
-                      </span>
-                    ))}
-                  </div>
+                </div>
+                <p className="font-cinzel text-[10px] rose-gold-text tracking-widest uppercase mb-4 opacity-70">{master.title}</p>
+                
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {master.specialization.map((spec, i) => (
+                    <span key={i} className="text-[9px] font-cinzel tracking-widest text-slate-500 border border-slate-800 px-2 py-1 uppercase">
+                      {spec}
+                    </span>
+                  ))}
+                </div>
 
-                  <p className="text-slate-400 font-playfair italic text-sm mb-8 line-clamp-2">
-                    {master.description}
-                  </p>
+                <p className="text-slate-400 font-playfair italic text-sm mb-8 line-clamp-2">
+                  {master.description}
+                </p>
 
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); startConsultation(master); }}
-                    className="w-full btn-celestial py-2 text-xs mt-auto group-hover:bg-rose-gold group-hover:text-slate-950 transition-colors flex items-center justify-center gap-2 font-bold"
-                  >
-                    <MessageCircle className="w-3 h-3" />
-                    상담 시작하기
-                  </button>
-               </div>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); startConsultation(master); }}
+                  className="w-full btn-celestial py-2 text-xs mt-auto group-hover:bg-rose-gold group-hover:text-slate-950 transition-colors flex items-center justify-center gap-2 font-bold"
+                >
+                  <MessageCircle className="w-3 h-3" />
+                  상담 시작하기
+                </button>
+              </div>
             </StreamFrame>
           </div>
         ))}
@@ -441,70 +794,70 @@ const handlePurchasePoints = (pointsToAdd: number) => {
 
   const renderMasterRegistration = () => (
     <div className="pt-40 px-6 max-w-3xl mx-auto min-h-screen pb-40">
-       <StreamUIOverlay />
-       <div className="text-center mb-16">
-          <h2 className="font-cinzel text-4xl md:text-5xl text-white tracking-[0.3em] mb-4 uppercase">전문가 자격 증명</h2>
-          <p className="font-playfair text-slate-400 italic text-xl">클로토의 도서관에 당신의 지혜를 등록하세요</p>
-       </div>
+      <StreamUIOverlay />
+      <div className="text-center mb-16">
+        <h2 className="font-cinzel text-4xl md:text-5xl text-white tracking-[0.3em] mb-4 uppercase">전문가 자격 증명</h2>
+        <p className="font-playfair text-slate-400 italic text-xl">클로토의 도서관에 당신의 지혜를 등록하세요</p>
+      </div>
 
-       <StreamFrame className="p-6 md:p-10">
-          <form onSubmit={handleRegisterMaster} className="w-full space-y-8">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
-                   <label className="font-cinzel text-xs text-rose-gold tracking-widest uppercase">마스터 성함</label>
-                   <input 
-                     required
-                     value={regData.name}
-                     onChange={(e) => setRegData({...regData, name: e.target.value})}
-                     className="w-full bg-white/5 border border-rose-gold/20 rounded-lg p-4 text-white focus:outline-none focus:border-rose-gold transition-colors font-playfair" 
-                     placeholder="성함을 입력하세요"
-                   />
-                </div>
-                <div className="space-y-3">
-                   <label className="font-cinzel text-xs text-rose-gold tracking-widest uppercase">마스터 칭호</label>
-                   <input 
-                     required
-                     value={regData.title}
-                     onChange={(e) => setRegData({...regData, title: e.target.value})}
-                     className="w-full bg-white/5 border border-rose-gold/20 rounded-lg p-4 text-white focus:outline-none focus:border-rose-gold transition-colors font-playfair" 
-                     placeholder="예: 태양의 예언자"
-                   />
-                </div>
-             </div>
+      <StreamFrame className="p-6 md:p-10">
+        <form onSubmit={handleRegisterMaster} className="w-full space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <label className="font-cinzel text-xs text-rose-gold tracking-widest uppercase">마스터 성함</label>
+              <input 
+                required
+                value={regData.name}
+                onChange={(e) => setRegData({...regData, name: e.target.value})}
+                className="w-full bg-white/5 border border-rose-gold/20 rounded-lg p-4 text-white focus:outline-none focus:border-rose-gold transition-colors font-playfair" 
+                placeholder="성함을 입력하세요"
+              />
+            </div>
+            <div className="space-y-3">
+              <label className="font-cinzel text-xs text-rose-gold tracking-widest uppercase">마스터 칭호</label>
+              <input 
+                required
+                value={regData.title}
+                onChange={(e) => setRegData({...regData, title: e.target.value})}
+                className="w-full bg-white/5 border border-rose-gold/20 rounded-lg p-4 text-white focus:outline-none focus:border-rose-gold transition-colors font-playfair" 
+                placeholder="예: 태양의 예언자"
+              />
+            </div>
+          </div>
 
-             <div className="space-y-3">
-                <label className="font-cinzel text-xs text-rose-gold tracking-widest uppercase">전문 분야 (쉼표로 구분)</label>
-                <input 
-                  required
-                  value={regData.specialization}
-                  onChange={(e) => setRegData({...regData, specialization: e.target.value})}
-                  className="w-full bg-white/5 border border-rose-gold/20 rounded-lg p-4 text-white focus:outline-none focus:border-rose-gold transition-colors font-playfair" 
-                  placeholder="예: 연애, 재물, 진로, 과거사"
-                />
-             </div>
+          <div className="space-y-3">
+            <label className="font-cinzel text-xs text-rose-gold tracking-widest uppercase">전문 분야 (쉼표로 구분)</label>
+            <input 
+              required
+              value={regData.specialization}
+              onChange={(e) => setRegData({...regData, specialization: e.target.value})}
+              className="w-full bg-white/5 border border-rose-gold/20 rounded-lg p-4 text-white focus:outline-none focus:border-rose-gold transition-colors font-playfair" 
+              placeholder="예: 연애, 재물, 진로, 과거사"
+            />
+          </div>
 
-             <div className="space-y-3">
-                <label className="font-cinzel text-xs text-rose-gold tracking-widest uppercase">마스터 소개 및 철학</label>
-                <textarea 
-                  required
-                  value={regData.description}
-                  onChange={(e) => setRegData({...regData, description: e.target.value})}
-                  className="w-full bg-white/5 border border-rose-gold/20 rounded-lg p-4 text-white focus:outline-none focus:border-rose-gold transition-colors font-playfair min-h-[150px] resize-none" 
-                  placeholder="당신의 타로 해석 스타일과 철학을 설명해 주세요."
-                />
-             </div>
+          <div className="space-y-3">
+            <label className="font-cinzel text-xs text-rose-gold tracking-widest uppercase">마스터 소개 및 철학</label>
+            <textarea 
+              required
+              value={regData.description}
+              onChange={(e) => setRegData({...regData, description: e.target.value})}
+              className="w-full bg-white/5 border border-rose-gold/20 rounded-lg p-4 text-white focus:outline-none focus:border-rose-gold transition-colors font-playfair min-h-[150px] resize-none" 
+              placeholder="당신의 타로 해석 스타일과 철학을 설명해 주세요."
+            />
+          </div>
 
-             <div className="flex items-center gap-4 p-4 bg-rose-gold/5 border border-rose-gold/20 rounded-xl">
-                <Info className="w-5 h-5 text-rose-gold flex-shrink-0" />
-                <p className="text-xs text-slate-400 font-playfair">현재 로그인한 계정의 프로필 이미지가 전문가 사진으로 자동 사용됩니다.</p>
-             </div>
+          <div className="flex items-center gap-4 p-4 bg-rose-gold/5 border border-rose-gold/20 rounded-xl">
+            <Info className="w-5 h-5 text-rose-gold flex-shrink-0" />
+            <p className="text-xs text-slate-400 font-playfair">현재 로그인한 계정의 프로필 이미지가 전문가 사진으로 자동 사용됩니다.</p>
+          </div>
 
-             <div className="pt-8 flex flex-col md:flex-row justify-center gap-6">
-                <button type="button" onClick={() => setState(AppState.MASTERS_VIEW)} className="text-slate-500 font-cinzel tracking-widest uppercase hover:text-white transition-colors">취소</button>
-                <button type="submit" className="btn-celestial text-lg px-12">마스터 등록 완료</button>
-             </div>
-          </form>
-       </StreamFrame>
+          <div className="pt-8 flex flex-col md:flex-row justify-center gap-6">
+            <button type="button" onClick={() => setState(AppState.MASTERS_VIEW)} className="text-slate-500 font-cinzel tracking-widest uppercase hover:text-white transition-colors">취소</button>
+            <button type="submit" className="btn-celestial text-lg px-12">마스터 등록 완료</button>
+          </div>
+        </form>
+      </StreamFrame>
     </div>
   );
 
@@ -615,7 +968,7 @@ const handlePurchasePoints = (pointsToAdd: number) => {
     );
   };
 
-  const renderChatSection = () => { 
+  const renderChatSection = () => {
     if (!readingResult) return null;
 
     return (
@@ -660,115 +1013,21 @@ const handlePurchasePoints = (pointsToAdd: number) => {
     );
   };
 
-// page.tsx의 handleSendMessage 함수 수정
-
-const handleSendMessage = async (isConsultationMode: boolean = false) => {
-  if (!userInput.trim() || isLoading) return;
-
-  const userContent = userInput.trim();
-  const newMsg: ChatMessage = { role: 'user', content: userContent };
-  
-  const updatedMessages = [...chatMessages, newMsg];
-  setChatMessages(updatedMessages);
-  setUserInput(''); 
-  setIsLoading(true);
-
-  try {
-    const res = await fetch('/api/tarot', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: updatedMessages.map(m => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          content: m.content
-        })),
-        selectedCards: pickedIndices
-      })
-    });
-
-    // ✅ 스트리밍 방식으로 응답 처리
-    const reader = res.body?.getReader();
-    if (!reader) {
-      throw new Error('응답 스트림을 읽을 수 없습니다');
-    }
-
-    const decoder = new TextDecoder('utf-8');
-    let aiText = '';
-    let assistantMsgAdded = false;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      
-      if (done) break;
-
-      // 스트리밍된 텍스트 디코딩
-      const chunk = decoder.decode(value, { stream: true });
-      aiText += chunk;
-
-      // AI 메시지가 없으면 먼저 추가
-      if (!assistantMsgAdded) {
-        setChatMessages(prev => [
-          ...prev,
-          { role: 'assistant', content: aiText }
-        ]);
-        assistantMsgAdded = true;
-      } else {
-        // 기존 AI 메시지 업데이트 (실시간으로 글자가 추가됨)
-        setChatMessages(prev => {
-          const updated = [...prev];
-          const lastMsg = updated[updated.length - 1];
-          if (lastMsg.role === 'assistant') {
-            updated[updated.length - 1] = {
-              ...lastMsg,
-              content: aiText
-            };
-          }
-          return updated;
-        });
-      }
-    }
-
-    // 최종 전체 텍스트로 한 번 더 업데이트
-    setChatMessages(prev => {
-      const updated = [...prev];
-      const lastMsg = updated[updated.length - 1];
-      if (lastMsg.role === 'assistant') {
-        updated[updated.length - 1] = {
-          ...lastMsg,
-          content: aiText
-        };
-      }
-      return updated;
-    });
-
-  } catch (error) {
-    console.error("채팅 전송 에러:", error);
-    setChatMessages(prev => [
-      ...prev,
-      { role: 'assistant', content: '요청 처리 중 오류가 발생했습니다.' }
-    ]);
-  } finally {
-    setIsLoading(false);
-    
-    setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  }
-};
-
+  // ==========================================
+  // 🎯 메인 렌더 함수
+  // ==========================================
   return (
     <Header 
-      user={user} 
-      
-      onHomeClick={resetReading} 
+      user={user}
+      onHomeClick={resetReading}
       onDeckClick={() => {
         setState(AppState.HOME);
         setTimeout(() => deckSectionRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-      }} 
+      }}
       onMastersClick={() => setState(AppState.MASTERS_VIEW)}
       onMyPageClick={() => setState(AppState.MY_PAGE)}
-      onLoginClick={() => setIsLoginModalOpen(true)} 
-      onLogout={handleLogout}  // ✅ 이 줄 수정
+      onLoginClick={() => setIsLoginModalOpen(true)}
+      onLogout={handleLogout}
       onShopClick={() => setState(AppState.SHOP)}
     >
       <div className="relative">
@@ -809,12 +1068,12 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
             packages={POINT_PACKAGES}
             onBack={() => setState(AppState.SHOP)}
             onPurchase={(points) => {
-              // ✅ 0이 아닐 때만 포인트 추가 (Toss 검증 후)
+              // ✅ 포인트 > 0일 때만 DB에 저장
               if (points > 0) {
                 handlePurchasePoints(points);
+              } else {
+                setState(AppState.CHECKOUT);
               }
-              // ✅ Checkout 페이지로 이동
-              setState(AppState.CHECKOUT);
             }}
             user={user}
           />
@@ -826,7 +1085,6 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
             onSubscribe={handleSubscribe}
           />
         )}
-        
         {state === AppState.CHECKOUT && (
           <Checkout 
             user={user}
@@ -836,113 +1094,113 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
 
         {state === AppState.QUESTION_INPUT && (
           <div className="pt-40 px-6 max-w-4xl mx-auto flex flex-col items-center min-h-screen">
-             <StreamUIOverlay />
-             <h2 className="font-cinzel text-3xl md:text-5xl text-white mb-20 tracking-[0.3em] uppercase text-center">의지의 속삭임</h2>
-             <StreamFrame className="w-full">
-                <textarea 
-                  value={question} 
-                  onChange={(e) => setQuestion(e.target.value)} 
-                  className="w-full bg-transparent border-none focus:ring-0 text-white font-playfair text-2xl md:text-3xl leading-relaxed min-h-[300px] resize-none placeholder:text-slate-800" 
-                  placeholder="당신의 질문은 무엇입니까?..." 
-                />
-             </StreamFrame>
-             <button onClick={() => setState(AppState.CARD_PICKING)} disabled={!question.trim()} className="mt-16 btn-celestial text-xl font-bold">운명의 데크로 나아가기</button>
+            <StreamUIOverlay />
+            <h2 className="font-cinzel text-3xl md:text-5xl text-white mb-20 tracking-[0.3em] uppercase text-center">의지의 속삭임</h2>
+            <StreamFrame className="w-full">
+              <textarea 
+                value={question} 
+                onChange={(e) => setQuestion(e.target.value)} 
+                className="w-full bg-transparent border-none focus:ring-0 text-white font-playfair text-2xl md:text-3xl leading-relaxed min-h-[300px] resize-none placeholder:text-slate-800" 
+                placeholder="당신의 질문은 무엇입니까?..." 
+              />
+            </StreamFrame>
+            <button onClick={() => setState(AppState.CARD_PICKING)} disabled={!question.trim()} className="mt-16 btn-celestial text-xl font-bold">운명의 데크로 나아가기</button>
           </div>
         )}
 
         {state === AppState.CARD_PICKING && (
           <div className="pt-32 flex flex-col items-center min-h-screen pb-40 overflow-hidden relative">
-             <StreamUIOverlay />
-             <div className="text-center mb-20 relative z-10 px-6">
-                <h2 className="font-cinzel text-3xl md:text-4xl text-white mb-4 tracking-[0.4em] uppercase">수평선 스프레드</h2>
-                <div className="flex items-center justify-center gap-4 rose-gold-text font-cinzel text-sm tracking-widest">
-                   <div className="w-12 h-[1px] bg-[#c58e714d]" />
-                   <span className="bg-[#0d0b1a] px-4">
-                     {pickedIndices.length} / {selectedType === ReadingType.YES_NO ? 1 : 3} 개의 실타래가 선택됨
-                   </span>
-                   <div className="w-12 h-[1px] bg-[#c58e714d]" />
-                </div>
-             </div>
-             
-             <div className="relative w-full max-w-[1800px] z-10 group">
-                <button 
-                   onClick={() => scrollDeck('left')}
-                   className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-4 bg-slate-950/80 border border-rose-gold/30 rounded-full text-rose-gold hover:bg-rose-gold hover:text-slate-950 transition-all opacity-0 group-hover:opacity-100"
-                >
-                   <ChevronLeft className="w-8 h-8" />
-                </button>
-                <button 
-                   onClick={() => scrollDeck('right')}
-                   className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-4 bg-slate-950/80 border border-rose-gold/30 rounded-full text-rose-gold hover:bg-rose-gold hover:text-slate-950 transition-all opacity-0 group-hover:opacity-100"
-                >
-                   <ChevronRight className="w-8 h-8" />
-                </button>
+            <StreamUIOverlay />
+            <div className="text-center mb-20 relative z-10 px-6">
+              <h2 className="font-cinzel text-3xl md:text-4xl text-white mb-4 tracking-[0.4em] uppercase">수평선 스프레드</h2>
+              <div className="flex items-center justify-center gap-4 rose-gold-text font-cinzel text-sm tracking-widest">
+                <div className="w-12 h-[1px] bg-[#c58e714d]" />
+                <span className="bg-[#0d0b1a] px-4">
+                  {pickedIndices.length} / {selectedType === ReadingType.YES_NO ? 1 : 3} 개의 실타래가 선택됨
+                </span>
+                <div className="w-12 h-[1px] bg-[#c58e714d]" />
+              </div>
+            </div>
+            
+            <div className="relative w-full max-w-[1800px] z-10 group">
+              <button 
+                onClick={() => scrollDeck('left')}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-4 bg-slate-950/80 border border-rose-gold/30 rounded-full text-rose-gold hover:bg-rose-gold hover:text-slate-950 transition-all opacity-0 group-hover:opacity-100"
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+              <button 
+                onClick={() => scrollDeck('right')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-4 bg-slate-950/80 border border-rose-gold/30 rounded-full text-rose-gold hover:bg-rose-gold hover:text-slate-950 transition-all opacity-0 group-hover:opacity-100"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
 
-                <div 
-                  ref={scrollContainerRef}
-                  className="flex overflow-x-auto no-scrollbar py-20 px-[20vw] gap-1 cursor-grab active:cursor-grabbing"
-                  style={{ scrollSnapType: 'x proximity' }}
-                >
-                  {Array.from({ length: TOTAL_DECK_SIZE }).map((_, idx) => {
-                    const isPicked = pickedIndices.find(p => p.index === idx);
-                    const pickOrder = pickedIndices.findIndex(p => p.index === idx) + 1;
-                    
-                    return (
-                      <div 
-                        key={idx} 
-                        onClick={() => handlePickCard(idx)} 
-                        className={`relative flex-shrink-0 w-32 md:w-44 aspect-[2/3] cursor-pointer transition-all duration-500 transform 
-                          ${isPicked ? 'scale-110 -translate-y-12 z-20' : 'hover:-translate-y-6 hover:z-10 opacity-60 hover:opacity-100'}
-                          first:ml-0 -ml-12 md:-ml-20`}
-                        style={{ scrollSnapAlign: 'center' }}
-                      >
-                        <StreamFrame className={`h-full flex items-center justify-center transition-all shadow-2xl
-                          ${isPicked ? 'border-rose-gold shadow-[0_0_40px_rgba(197,142,113,0.6)] bg-[#c58e712a]' : 'border-[#c58e712a] bg-slate-900/40'}`}>
-                          
-                          <div className="flex flex-col items-center justify-center w-full h-full">
-                             {isPicked ? (
-                               <div className="flex flex-col items-center animate-pulse scale-150">
-                                 <span className="font-cinzel text-3xl rose-gold-text font-bold mb-1">{pickOrder}</span>
-                                 <Star className="w-4 h-4 rose-gold-text" />
-                               </div>
-                             ) : (
-                               <Hexagon className="w-8 h-8 text-[#c58e711a]" />
-                             )}
-                          </div>
-                          
-                          <div className="absolute inset-0 opacity-10 pointer-events-none">
-                             <div className="w-full h-full border border-dashed border-rose-gold/20 m-1 rounded-sm" />
-                          </div>
-                          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
-                        </StreamFrame>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                <div className="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-r from-[#0d0b1a] to-transparent z-20 pointer-events-none" />
-                <div className="absolute right-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-l from-[#0d0b1a] to-transparent z-20 pointer-events-none" />
-             </div>
+              <div 
+                ref={scrollContainerRef}
+                className="flex overflow-x-auto no-scrollbar py-20 px-[20vw] gap-1 cursor-grab active:cursor-grabbing"
+                style={{ scrollSnapType: 'x proximity' }}
+              >
+                {Array.from({ length: TOTAL_DECK_SIZE }).map((_, idx) => {
+                  const isPicked = pickedIndices.find(p => p.index === idx);
+                  const pickOrder = pickedIndices.findIndex(p => p.index === idx) + 1;
+                  
+                  return (
+                    <div 
+                      key={idx} 
+                      onClick={() => handlePickCard(idx)} 
+                      className={`relative flex-shrink-0 w-32 md:w-44 aspect-[2/3] cursor-pointer transition-all duration-500 transform 
+                        ${isPicked ? 'scale-110 -translate-y-12 z-20' : 'hover:-translate-y-6 hover:z-10 opacity-60 hover:opacity-100'}
+                        first:ml-0 -ml-12 md:-ml-20`}
+                      style={{ scrollSnapAlign: 'center' }}
+                    >
+                      <StreamFrame className={`h-full flex items-center justify-center transition-all shadow-2xl
+                        ${isPicked ? 'border-rose-gold shadow-[0_0_40px_rgba(197,142,113,0.6)] bg-[#c58e712a]' : 'border-[#c58e712a] bg-slate-900/40'}`}>
+                        
+                        <div className="flex flex-col items-center justify-center w-full h-full">
+                          {isPicked ? (
+                            <div className="flex flex-col items-center animate-pulse scale-150">
+                              <span className="font-cinzel text-3xl rose-gold-text font-bold mb-1">{pickOrder}</span>
+                              <Star className="w-4 h-4 rose-gold-text" />
+                            </div>
+                          ) : (
+                            <Hexagon className="w-8 h-8 text-[#c58e711a]" />
+                          )}
+                        </div>
+                        
+                        <div className="absolute inset-0 opacity-10 pointer-events-none">
+                          <div className="w-full h-full border border-dashed border-rose-gold/20 m-1 rounded-sm" />
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
+                      </StreamFrame>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <div className="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-r from-[#0d0b1a] to-transparent z-20 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-l from-[#0d0b1a] to-transparent z-20 pointer-events-none" />
+            </div>
 
-             <div className="mt-20 flex flex-col md:flex-row items-center gap-10 relative z-10">
-                <button 
-                  onClick={() => setPickedIndices([])} 
-                  className="font-cinzel rose-gold-text tracking-[0.3em] hover:text-white transition-colors uppercase text-sm border-b border-[#c58e714d] pb-1"
-                >
-                   실타래 다시 섞기
-                </button>
-                <button 
-                  onClick={finalizeSelection} 
-                  disabled={pickedIndices.length < (selectedType === ReadingType.YES_NO ? 1 : 3)} 
-                  className="btn-celestial text-xl disabled:opacity-20 disabled:cursor-not-allowed group font-bold"
-                >
-                   운명 풀어내기 <ArrowRight className="inline-block ml-4 w-6 h-6 group-hover:translate-x-2 transition-transform" />
-                </button>
-             </div>
-             
-             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 rose-gold-text/40 font-cinzel text-[10px] tracking-[0.3em] uppercase whitespace-nowrap px-4">
-                <ChevronLeft className="w-3 h-3" /> 스와이프하여 덱을 탐색하세요 <ChevronRight className="w-3 h-3" />
-             </div>
+            <div className="mt-20 flex flex-col md:flex-row items-center gap-10 relative z-10">
+              <button 
+                onClick={() => setPickedIndices([])} 
+                className="font-cinzel rose-gold-text tracking-[0.3em] hover:text-white transition-colors uppercase text-sm border-b border-[#c58e714d] pb-1"
+              >
+                실타래 다시 섞기
+              </button>
+              <button 
+                onClick={finalizeSelection} 
+                disabled={pickedIndices.length < (selectedType === ReadingType.YES_NO ? 1 : 3)} 
+                className="btn-celestial text-xl disabled:opacity-20 disabled:cursor-not-allowed group font-bold"
+              >
+                운명 풀어내기 <ArrowRight className="inline-block ml-4 w-6 h-6 group-hover:translate-x-2 transition-transform" />
+              </button>
+            </div>
+            
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 rose-gold-text/40 font-cinzel text-[10px] tracking-[0.3em] uppercase whitespace-nowrap px-4">
+              <ChevronLeft className="w-3 h-3" /> 스와이프하여 덱을 탐색하세요 <ChevronRight className="w-3 h-3" />
+            </div>
           </div>
         )}
 
@@ -961,9 +1219,8 @@ const handleSendMessage = async (isConsultationMode: boolean = false) => {
         onClose={() => setIsLoginModalOpen(false)} 
         onLogin={(user) => {
           setUser(user);
-          // ✅ 로그인 성공 시 localStorage에 저장
           localStorage.setItem('user', JSON.stringify(user));
-          console.log('✅ 사용자 로그인 및 저장:', user.name);
+          console.log('✅ 사용자 로그인:', user.name);
         }}
       />
     </Header>
