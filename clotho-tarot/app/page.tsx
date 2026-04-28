@@ -104,47 +104,50 @@ const App: React.FC = () => {
   // ==========================================
   // 🎯 DB 저장 함수 1️⃣: 타로 읽기 결과 저장
   // ==========================================
-  const saveReadingResult = async (reading: ReadingResult) => {
-    if (!user) {
-      console.error('❌ 사용자 정보 없음');
-      return null;
+// saveReadingResult 함수 (page.tsx에서 교체)
+const saveReadingResult = async (reading: ReadingResult) => {
+  if (!user || !user.id) {
+    console.error('❌ 사용자 정보 없음');
+    console.log('user:', user);
+    return null;
+  }
+
+  try {
+    console.log('📤 타로 읽기 결과 저장 시작...');
+    console.log('📝 user.id:', user.id);
+    
+    // 1️⃣ API 호출: Reading 테이블에 저장
+    const response = await fetch('/api/readings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: reading.question,
+        spreadType: reading.type === ReadingType.YES_NO ? 'one-card' : 'three-card',
+        fullAnswer: reading.interpretation,
+        userId: user.id,  // ✅ userId로 변경
+        // ReadingCard들 (카드 배치 정보)
+        cards: reading.cards.map((card: any, index: number) => ({
+          cardId: card.id || card.number, // DB 카드 ID
+          position: index + 1, // 1:첫번째, 2:두번째, 3:세번째
+          orientation: card.isReversed ? 'reversed' : 'upright' // 정방향/역방향
+        }))
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`저장 실패: ${response.status}`);
     }
 
-    try {
-      console.log('📤 타로 읽기 결과 저장 시작...');
-      
-      // 1️⃣ API 호출: Reading 테이블에 저장
-      const response = await fetch('/api/readings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: reading.question,
-          spreadType: reading.type === ReadingType.YES_NO ? 'one-card' : 'three-card',
-          fullAnswer: reading.interpretation,
-          id: user.id,
-          // ReadingCard들 (카드 배치 정보)
-          cards: reading.cards.map((card: any, index: number) => ({
-            cardId: card.id || card.number, // DB 카드 ID
-            position: index + 1, // 1:첫번째, 2:두번째, 3:세번째
-            orientation: card.isReversed ? 'reversed' : 'upright' // 정방향/역방향
-          }))
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`저장 실패: ${response.status}`);
-      }
-
-      const savedReading = await response.json();
-      console.log('✅ 타로 읽기 결과 저장 완료:', savedReading.id);
-      
-      return savedReading;
-    } catch (error) {
-      console.error('❌ 타로 읽기 저장 실패:', error);
-      alert('타로 읽기 결과 저장에 실패했습니다.');
-      return null;
-    }
-  };
+    const savedReading = await response.json();
+    console.log('✅ 타로 읽기 결과 저장 완료:', savedReading.id);
+    
+    return savedReading;
+  } catch (error) {
+    console.error('❌ 타로 읽기 저장 실패:', error);
+    alert('타로 읽기 결과 저장에 실패했습니다.');
+    return null;
+  }
+};
 
   // ==========================================
   // 🎯 DB 저장 함수 2️⃣: 포인트 충전 & PointLog 저장
