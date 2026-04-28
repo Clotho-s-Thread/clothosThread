@@ -121,7 +121,7 @@ const App: React.FC = () => {
           question: reading.question,
           spreadType: reading.type === ReadingType.YES_NO ? 'one-card' : 'three-card',
           fullAnswer: reading.interpretation,
-          userId: user.id,
+          id: user.id,
           // ReadingCard들 (카드 배치 정보)
           cards: reading.cards.map((card: any, index: number) => ({
             cardId: card.id || card.number, // DB 카드 ID
@@ -206,7 +206,7 @@ const App: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user.id,
+          id: user.id,
           nickname: regData.name,
           intro: regData.description,
           specialty: regData.specialization, // "연애, 재물, 진로" 형태로 저장
