@@ -16,16 +16,19 @@ export async function POST(req: NextRequest) {
   try {
     // ✅ 1️⃣ 요청 데이터 파싱
     const body = await req.json();
-    const { question, spreadType, fullAnswer, userId, cards } = body;
+    const { question, spreadType, fullAnswer, userId, id, cards } = body;
+
+    // ✅ userId 또는 id 중 하나 사용
+    const finalUserId = userId || id;
 
     console.log(`📦 [${requestId}] 받은 데이터:`);
     console.log(`  question: "${question}"`);
     console.log(`  spreadType: "${spreadType}"`);
-    console.log(`  userId: "${userId}"`);
+    console.log(`  userId: "${finalUserId}"`);
     console.log(`  cards 개수: ${cards?.length || 0}`);
 
     // ✅ 2️⃣ 필수 데이터 검증
-    if (!question || !userId || !fullAnswer) {
+    if (!question || !finalUserId || !fullAnswer) {
       console.error(`❌ [${requestId}] 필수 데이터 누락`);
       return NextResponse.json(
         { error: '질문, 사용자ID, 해석이 필요합니다' },
@@ -51,7 +54,7 @@ export async function POST(req: NextRequest) {
         question,
         spreadType,
         fullAnswer,
-        userId
+        userId: finalUserId
       }
     });
 
@@ -82,7 +85,7 @@ export async function POST(req: NextRequest) {
       id: reading.id,
       question,
       spreadType,
-      userId,
+      userId: finalUserId,
       cardsCount: cards.length,
       timestamp: new Date().toISOString()
     };
