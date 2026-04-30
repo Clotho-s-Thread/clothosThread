@@ -3,7 +3,7 @@
 @theme {
   --font-cinzel: var(--font-cinzel);
   --font-playfair: var(--font-playfair);
-  --color-rose-gold: #c58e71;
+  --color-rose-gold: #c58e71;  /* 로즈골드로 변경 */
   
   /* ✨ 빙글빙글 도는 우주 애니메이션 (이전 코드에 빠져있었어요!) */
   --animate-orbit: orbit 30s linear infinite;
@@ -15,11 +15,52 @@
 }
 
 body {
-  /* 단순한 검은색 대신, 은은한 보랏빛이 도는 몽환적인 밤하늘 그라데이션 적용 */
-  background: radial-gradient(circle at top center, #110820 0%, #050511 100%);
-  color: #ffffff;
+  /* 🌙 V1 그라데이션: 채도 낮춘 신비로운 파란-보라색 */
+  background: linear-gradient(135deg, #16192f 0%, #2a2750 25%, #3d3a70 50%, #3a2f60 75%, #1a1435 100%);
+  background-attachment: fixed;
+  color: #e8e8e8;  /* 주 텍스트: 실버 */
   min-height: 100vh; /* 화면 전체를 덮도록 필수 추가 */
   margin: 0;
+}
+
+html {
+  /* 🌙 HTML 태그에도 동일한 V1 그라데이션 적용 */
+  background: linear-gradient(135deg, #16192f 0%, #2a2750 25%, #3d3a70 50%, #3a2f60 75%, #1a1435 100%);
+  background-attachment: fixed;
+  color: #e8e8e8;
+}
+
+/* 보조 텍스트 색상 */
+.text-secondary, 
+small, 
+.subtitle,
+.description {
+  color: #c58e71;  /* 보조 텍스트: 로즈골드 */
+}
+
+/* 호버 상태 */
+a, 
+button {
+  transition: color 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+}
+
+a:hover {
+  color: #c58e71;
+}
+
+button:hover {
+  color: #c58e71;
+  border-color: #c58e71;
+  background-color: rgba(197, 142, 113, 0.1);
+}
+
+/* 테두리 색상 */
+.border-accent {
+  border-color: rgba(197, 142, 113, 0.3);
+}
+
+.border-accent:hover {
+  border-color: #c58e71;
 }
 
 /* --- 아래는 기존에 작성했던 클로토 맞춤 디자인입니다 --- */
@@ -68,3 +109,49 @@ body {
   background: var(--color-rose-gold);
   box-shadow: 0 0 8px var(--color-rose-gold);
 }
+
+/* 추가 CSS 클래스 (선택사항) */
+
+/* 주 텍스트 클래스 */
+.text-main {
+  color: #e8e8e8;
+}
+
+/* 보조 텍스트 클래스 */
+.text-sub {
+  color: #c58e71;
+}
+
+/* 호버 효과 클래스 */
+.hover-accent {
+  color: #e8e8e8;
+  transition: color 0.3s ease;
+}
+
+.hover-accent:hover {
+  color: #c58e71;
+}
+
+/* 버튼 스타일 */
+.btn-accent {
+  color: #e8e8e8;
+  border: 1.5px solid #c58e71;
+  background: transparent;
+  padding: 0.75rem 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn-accent:hover {
+  color: #c58e71;
+  background-color: rgba(197, 142, 113, 0.1);
+  transform: translateY(-2px);
+}
+
+/* 테두리 클래스 */
+.border-accent-light {
+  border-color: rgba(197, 142, 113, 0.3);
+} 

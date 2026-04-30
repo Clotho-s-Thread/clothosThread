@@ -319,7 +319,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
       // ✅ 5️⃣ API 호출
       console.log("🌐 [API 호출 시작]");
-      const res = await fetch('/api/tarot', {
+      const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
@@ -490,7 +490,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/tarot', {
+      const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

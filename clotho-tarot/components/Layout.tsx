@@ -39,11 +39,22 @@ export const Header: React.FC<LayoutProps> = ({
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{
+      background: 'linear-gradient(135deg, #16192f 0%, #2a2750 25%, #3d3a70 50%, #3a2f60 75%, #1a1435 100%)',
+      backgroundAttachment: 'fixed'
+    }}>
       {/* ✨ 100% 확실한 방법: z-index와 pointer-events를 테일윈드에 맡기지 않고 직접(style) 강제 주입합니다! */}
       <nav 
-        style={{ zIndex: 999999, pointerEvents: 'auto' }}
-        className={`fixed top-0 w-full transition-all duration-500 ${isScrolled ? 'bg-slate-950/90 backdrop-blur-xl py-4 border-b border-[#c58e7133]' : 'bg-transparent py-8'}`}
+        className={`fixed top-0 w-full transition-all duration-500 ${isScrolled ? 'py-4 border-b border-[#c58e7133]' : 'py-8'}`}
+        style={{
+          zIndex: 999999,
+          pointerEvents: 'auto',
+          background: isScrolled 
+          ? 'linear-gradient(135deg, rgba(22, 25, 47, 0.9) 0%, rgba(42, 39, 80, 0.9) 25%, rgba(61, 58, 112, 0.9) 50%, rgba(58, 47, 96, 0.9) 75%, rgba(26, 20, 53, 0.9) 100%)'
+          : 'transparent',
+          backdropFilter: isScrolled ? 'blur(20px)' : 'none',
+          WebkitBackdropFilter: isScrolled ? 'blur(20px)' : 'none'
+        }}
       >
         <div className="max-w-7xl mx-auto px-10 flex justify-between items-center">
           <div 
@@ -61,12 +72,14 @@ export const Header: React.FC<LayoutProps> = ({
             <button 
               onClick={onDeckClick} 
               className="text-white/40 hover:text-[#c58e71] transition-colors uppercase hidden lg:block"
+              style={{ fontSize: '18px' }}
             >
               타로 도감
             </button>
             <button 
               onClick={onMastersClick} 
               className="text-white/40 hover:text-[#c58e71] transition-colors uppercase flex items-center gap-2 font-bold"
+              style={{ fontSize: '18px' }}
             >
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">전문가 상담</span>
@@ -78,6 +91,7 @@ export const Header: React.FC<LayoutProps> = ({
                 <button 
                   onClick={onShopClick}
                   className="text-white/40 hover:text-[#c58e71] transition-colors uppercase flex items-center gap-2 font-bold"
+                  style={{ fontSize: '18px' }}
                 >
                   <ShoppingBag className="w-4 h-4" />
                   <span className="hidden sm:inline">상점</span>
@@ -111,7 +125,14 @@ export const Header: React.FC<LayoutProps> = ({
                 </button>
 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-6 w-56 bg-slate-950 border border-[#c58e7133] shadow-3xl py-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div 
+                    className="absolute right-0 mt-6 w-56 border border-[#c58e7133] shadow-3xl py-4 animate-in fade-in slide-in-from-top-4 duration-300"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(22, 25, 47, 0.95) 0%, rgba(42, 39, 80, 0.95) 25%, rgba(61, 58, 112, 0.95) 50%, rgba(58, 47, 96, 0.95) 75%, rgba(26, 20, 53, 0.95) 100%)',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)'
+                    }}
+                  >
                     <div className="px-6 py-4 border-b border-[#c58e711a] mb-2">
                       <p className="text-[10px] text-slate-600 font-cinzel mb-2 tracking-widest uppercase">Consultant</p>
                       <p className="text-xs text-[#c58e71] font-cinzel truncate">{user.email}</p>

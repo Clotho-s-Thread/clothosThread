@@ -51,7 +51,13 @@ export default function RootLayout({
         strategy="beforeInteractive"
       />
     </head>
-      <body className={`${cinzel.variable} ${playfair.variable} antialiased`}>
+      <body 
+        className={`${cinzel.variable} ${playfair.variable} antialiased`}
+        style={{
+          background: 'linear-gradient(135deg, #16192f 0%, #2a2750 25%, #3d3a70 50%, #3a2f60 75%, #1a1435 100%)',
+          backgroundAttachment: 'fixed'
+        }}
+      >
         {children}
       </body>
     </html>
