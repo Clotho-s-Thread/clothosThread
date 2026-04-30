@@ -30,20 +30,21 @@ const StreamUIOverlay = () => (
   <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
     <div className="geometric-bg absolute inset-0" />
     <div className="absolute inset-0 flex items-center justify-center">
-      <div className="w-[800px] h-[800px] border border-[#c58e711a] rounded-full animate-orbit flex items-center justify-center">
-        <div className="w-[600px] h-[600px] border border-[#c58e712a] rounded-full" />
-        <div className="absolute w-full h-[1px] bg-[#c58e710d]" />
-        <div className="absolute h-full w-[1px] bg-[#c58e710d]" />
+      <div className="w-[800px] h-[800px] border border-[#c58e7133] rounded-full animate-orbit flex items-center justify-center">
+        <div className="w-[600px] h-[600px] border border-[#c58e7152] rounded-full" />
+        <div className="absolute w-full h-[1px] bg-[#c58e7126]" />
+        <div className="absolute h-full w-[1px] bg-[#c58e7126]" />
       </div>
     </div>
-    <div className="absolute top-10 left-10 w-20 h-20 border-t border-l border-[#c58e714d] opacity-50" />
-    <div className="absolute top-10 right-10 w-20 h-20 border-t border-r border-[#c58e714d] opacity-50" />
-    <div className="absolute bottom-10 left-10 w-20 h-20 border-b border-l border-[#c58e714d] opacity-50" />
-    <div className="absolute bottom-10 right-10 w-20 h-20 border-b border-r border-[#c58e714d] opacity-50" />
+    <div className="absolute top-10 left-10 w-20 h-20 border-t border-l border-[#c58e7166] opacity-70" />
+    <div className="absolute top-10 right-10 w-20 h-20 border-t border-r border-[#c58e7166] opacity-70" />
+    <div className="absolute bottom-10 left-10 w-20 h-20 border-b border-l border-[#c58e7166] opacity-70" />
+    <div className="absolute bottom-10 right-10 w-20 h-20 border-b border-r border-[#c58e7166] opacity-70" />
   </div>
 );
 
-const StreamFrame: React.FC<{ children: React.ReactNode; className?: string }> = ({ 
+// MyPageContent용 커스텀 StreamFrame (원래 스타일 유지)
+const MyPageStreamFrame: React.FC<{ children: React.ReactNode; className?: string }> = ({ 
   children, 
   className = "" 
 }) => (
@@ -52,7 +53,13 @@ const StreamFrame: React.FC<{ children: React.ReactNode; className?: string }> =
     <div className="corner-star -top-1 -right-1" />
     <div className="corner-star -bottom-1 -left-1" />
     <div className="corner-star -bottom-1 -right-1" />
-    <div className="p-3 border border-[#c58e7133] m-1 h-full relative overflow-hidden flex flex-col items-center justify-center">
+    <div 
+      className="p-3 m-1 h-full relative overflow-hidden flex flex-col items-center justify-center"
+      style={{
+        background: 'rgba(232, 232, 232, 0.08)',
+        border: '1px solid rgba(197, 142, 113, 0.3)'
+      }}
+    >
       {children}
     </div>
   </div>
@@ -119,19 +126,21 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
     <div className="pt-32 px-6 max-w-4xl mx-auto min-h-screen pb-40">
       <StreamUIOverlay />
       
+      {/* 제목 섹션 */}
       <div className="text-center mb-16 relative z-10">
         <h2 className="font-cinzel text-4xl md:text-6xl text-white mb-6 tracking-[0.4em] uppercase">
           마이 페이지
         </h2>
-        <p className="font-playfair text-xl text-white/60 italic">
+        <p className="font-playfair text-xl text-[#c58e71] italic">
           당신의 영적 여정을 관리하세요.
         </p>
       </div>
 
+      {/* 메인 콘텐츠 그리드 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
         {/* 왼쪽: 프로필 영역 */}
         <div className="md:col-span-1">
-          <StreamFrame className="p-8 flex flex-col items-center">
+          <MyPageStreamFrame className="p-8 flex flex-col items-center">
             {isEditingProfile ? (
               // 프로필 수정 모드
               <div className="w-full space-y-6">
@@ -176,14 +185,18 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
                 {/* 닉네임 입력 필드 */}
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="font-cinzel text-[10px] text-slate-500 tracking-widest uppercase">
+                    <label className="font-cinzel text-[10px] text-[#c58e71] tracking-widest uppercase">
                       닉네임
                     </label>
                     <input 
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="w-full bg-white/5 border border-[#c58e71]/20 rounded-sm p-3 text-white text-sm focus:outline-none focus:border-[#c58e71] transition-colors font-playfair"
+                      className="w-full rounded-sm p-3 text-white text-sm focus:outline-none transition-colors font-playfair placeholder:text-white/30"
+                      style={{
+                        background: 'rgba(232, 232, 232, 0.08)',
+                        border: '1px solid rgba(197, 142, 113, 0.3)'
+                      }}
                       placeholder="새 닉네임 입력"
                     />
                   </div>
@@ -223,9 +236,21 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
                 <h3 className="font-cinzel text-2xl text-white mb-1 tracking-widest">
                   {user?.name}
                 </h3>
-                <p className="font-cinzel text-xs text-[#c58e71]/60 tracking-widest mb-6">
+                <p className="font-cinzel text-xs text-[#c58e71]/60 tracking-widest mb-4">
                   {user?.email}
                 </p>
+                
+                {/* 포인트 표시 */}
+                {user?.points !== undefined && (
+                  <div className="mb-6 text-center">
+                    <p className="font-cinzel text-[10px] text-white/40 tracking-widest uppercase mb-2">
+                      보유 포인트
+                    </p>
+                    <p className="font-cinzel text-2xl text-[#c58e71] tracking-wider">
+                      {(user.points || 0).toLocaleString()} P
+                    </p>
+                  </div>
+                )}
                 
                 {/* 프로필 수정 버튼 */}
                 <button 
@@ -236,53 +261,88 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
                 </button>
               </>
             )}
-          </StreamFrame>
+          </MyPageStreamFrame>
         </div>
 
         {/* 오른쪽: 최근 상담 + 타로 덱 정보 */}
         <div className="md:col-span-2 space-y-8">
           {/* 최근 상담 내역 */}
-          <StreamFrame className="p-8 items-start justify-start">
+          <MyPageStreamFrame className="p-8 items-start justify-start">
             <h4 className="font-cinzel text-lg text-white mb-6 tracking-widest flex items-center gap-3">
               <Moon className="w-5 h-5 text-[#c58e71]" /> 최근 상담 내역
             </h4>
             <div className="w-full space-y-4">
-              <div className="p-4 border border-white/5 bg-white/5 rounded-sm flex justify-between items-center group hover:border-[#c58e71]/30 transition-colors cursor-pointer">
+              {/* 상담 기록 1 */}
+              <div 
+                className="p-4 rounded-sm flex justify-between items-center group hover:border-[#c58e71] transition-all cursor-pointer"
+                style={{
+                  background: 'rgba(232, 232, 232, 0.08)',
+                  border: '1px solid rgba(197, 142, 113, 0.3)'
+                }}
+              >
                 <div>
                   <p className="text-white text-sm font-medium mb-1 tracking-wide">오늘의 운세 상담</p>
                   <p className="text-xs text-white/40 font-cinzel tracking-widest">2026.03.27</p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-[#c58e71]/40 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4 text-[#c58e71]/40 group-hover:text-[#c58e71] group-hover:translate-x-1 transition-all" />
               </div>
-              <div className="p-4 border border-white/5 bg-white/5 rounded-sm flex justify-between items-center group hover:border-[#c58e71]/30 transition-colors cursor-pointer opacity-50">
+              
+              {/* 상담 기록 2 */}
+              <div 
+                className="p-4 rounded-sm flex justify-between items-center group hover:border-[#c58e71] transition-all cursor-pointer opacity-60 hover:opacity-100"
+                style={{
+                  background: 'rgba(232, 232, 232, 0.08)',
+                  border: '1px solid rgba(197, 142, 113, 0.3)'
+                }}
+              >
                 <div>
                   <p className="text-white text-sm font-medium mb-1 tracking-wide">연애운 심층 분석</p>
                   <p className="text-xs text-white/40 font-cinzel tracking-widest">2026.03.20</p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-[#c58e71]/40 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4 text-[#c58e71]/40 group-hover:text-[#c58e71] group-hover:translate-x-1 transition-all" />
               </div>
+
+              {/* 상담 기록 더보기 */}
+              <button 
+                className="w-full py-3 text-center text-[#c58e71]/50 font-cinzel text-[10px] tracking-[0.2em] hover:text-[#c58e71] transition-colors"
+                style={{
+                  background: 'rgba(232, 232, 232, 0.08)',
+                  border: '1px solid rgba(197, 142, 113, 0.3)'
+                }}
+              >
+                더 보기
+              </button>
             </div>
-          </StreamFrame>
+          </MyPageStreamFrame>
 
           {/* 현재 사용 중인 타로 덱 */}
-          <StreamFrame className="p-8 items-start justify-start">
+          <MyPageStreamFrame className="p-8 items-start justify-start">
             <h4 className="font-cinzel text-lg text-white mb-6 tracking-widest flex items-center gap-3">
               <Star className="w-5 h-5 text-[#c58e71]" /> 나의 타로 덱
             </h4>
-            <div className="flex items-center gap-6">
-              <div className="w-20 aspect-[2/3] border border-[#c58e71]/30 bg-slate-900 rounded-sm flex items-center justify-center">
-                <Hexagon className="w-6 h-6 text-[#c58e71]/20" />
+            <div className="w-full flex items-center gap-6">
+              <div 
+                className="w-20 aspect-[2/3] rounded-sm flex items-center justify-center flex-shrink-0 hover:border-[#c58e71] transition-all"
+                style={{
+                  background: 'rgba(232, 232, 232, 0.08)',
+                  border: '1px solid rgba(197, 142, 113, 0.3)'
+                }}
+              >
+                <Hexagon className="w-8 h-8 text-[#c58e71]/40" />
               </div>
-              <div>
-                <p className="text-white text-sm font-medium mb-1 tracking-wide">
+              <div className="flex-1">
+                <p className="text-white text-sm font-medium mb-1 tracking-wide font-cinzel">
                   {selectedDeck.nameKo}
                 </p>
-                <p className="text-xs text-white/40 font-cinzel tracking-widest">
+                <p className="text-xs text-[#c58e71] font-cinzel tracking-widest uppercase mb-3">
                   현재 사용 중인 덱
+                </p>
+                <p className="text-xs text-white/40 line-clamp-2 font-playfair">
+                  {selectedDeck.description}
                 </p>
               </div>
             </div>
-          </StreamFrame>
+          </MyPageStreamFrame>
         </div>
       </div>
     </div>

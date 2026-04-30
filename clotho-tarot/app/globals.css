@@ -3,14 +3,20 @@
 @theme {
   --font-cinzel: var(--font-cinzel);
   --font-playfair: var(--font-playfair);
-  --color-rose-gold: #c58e71;  /* 로즈골드로 변경 */
+  --color-rose-gold: #c58e71;  /* 로즈골드로 유지 */
   
-  /* ✨ 빙글빙글 도는 우주 애니메이션 (이전 코드에 빠져있었어요!) */
+  /* ✨ 빙글빙글 도는 우주 애니메이션 */
   --animate-orbit: orbit 30s linear infinite;
   
   @keyframes orbit {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+  }
+  
+  /* ✨ 별 깜빡임 애니메이션 */
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
   }
 }
 
@@ -19,8 +25,101 @@ body {
   background: linear-gradient(135deg, #16192f 0%, #2a2750 25%, #3d3a70 50%, #3a2f60 75%, #1a1435 100%);
   background-attachment: fixed;
   color: #e8e8e8;  /* 주 텍스트: 실버 */
-  min-height: 100vh; /* 화면 전체를 덮도록 필수 추가 */
+  min-height: 100vh;
   margin: 0;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ✨ 매우 촘촘한 밤하늘 별 배경 - 다양한 크기의 별들 */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    /* 작은 별들 (0.5px) */
+    radial-gradient(0.5px 0.5px at 5% 8%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 12% 15%, #f0f0f0, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 18% 22%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 25% 18%, #e8e8e8, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 32% 35%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 38% 28%, #f0f0f0, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 45% 42%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 52% 12%, #e8e8e8, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 58% 55%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 65% 38%, #f0f0f0, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 72% 68%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 78% 25%, #e8e8e8, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 85% 62%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 92% 45%, #f0f0f0, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 8% 78%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 15% 92%, #e8e8e8, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 22% 85%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 35% 72%, #f0f0f0, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 42% 88%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 55% 75%, #e8e8e8, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 68% 92%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 75% 82%, #f0f0f0, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 88% 88%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 98% 85%, #e8e8e8, rgba(255, 255, 255, 0)),
+    radial-gradient(0.5px 0.5px at 3% 48%, white, rgba(255, 255, 255, 0)),
+    
+    /* 중간 크기 별들 (1px) */
+    radial-gradient(1px 1px at 10% 20%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 20% 30%, #f5f5f5, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 30% 10%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 40% 50%, #ffffff, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 50% 35%, #f0f0f0, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 60% 70%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 70% 20%, #ffffff, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 80% 60%, #f5f5f5, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 90% 15%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 15% 65%, #f0f0f0, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 25% 45%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 35% 80%, #f5f5f5, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 45% 25%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 55% 60%, #ffffff, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 65% 40%, #f0f0f0, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 75% 75%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 85% 38%, #f5f5f5, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 95% 50%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 5% 55%, #ffffff, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 12% 75%, #f0f0f0, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 28% 62%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 48% 15%, #f5f5f5, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 62% 48%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 78% 88%, #ffffff, rgba(255, 255, 255, 0)),
+    
+    /* 큰 별들 (1.5px ~ 2px) */
+    radial-gradient(1.5px 1.5px at 15% 35%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 35% 55%, #ffffff, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 55% 25%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 75% 45%, #f5f5f5, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 22% 72%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 42% 38%, #ffffff, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 68% 58%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 88% 72%, #f5f5f5, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 25% 15%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 45% 65%, #ffffff, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 65% 12%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 85% 82%, #f5f5f5, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 8% 32%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 32% 92%, #ffffff, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 58% 82%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(1.5px 1.5px at 92% 35%, #f5f5f5, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 18% 58%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 38% 18%, #ffffff, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 72% 38%, white, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 10% 88%, #f5f5f5, rgba(255, 255, 255, 0));
+  background-repeat: repeat;
+  background-size: 100% 100%;
+  background-position: 0 0;
+  pointer-events: none;
+  z-index: 1;
+  animation: twinkle 4s ease-in-out infinite;
 }
 
 html {
@@ -79,6 +178,7 @@ button:hover {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  z-index: 2;
 }
 
 .btn-celestial:hover {
@@ -100,6 +200,7 @@ button:hover {
   background: rgba(13, 11, 26, 0.6);
   border: 1px solid rgba(197, 142, 113, 0.2);
   backdrop-filter: blur(10px);
+  z-index: 2;
 }
 
 .corner-star {
@@ -126,6 +227,8 @@ button:hover {
 .hover-accent {
   color: #e8e8e8;
   transition: color 0.3s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .hover-accent:hover {
@@ -143,6 +246,8 @@ button:hover {
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 500;
+  position: relative;
+  z-index: 2;
 }
 
 .btn-accent:hover {
@@ -154,4 +259,15 @@ button:hover {
 /* 테두리 클래스 */
 .border-accent-light {
   border-color: rgba(197, 142, 113, 0.3);
-} 
+}
+
+/* z-index 조정으로 별 효과 뒤에 콘텐츠 표시 */
+main {
+  position: relative;
+  z-index: 2;
+}
+
+nav {
+  position: relative;
+  z-index: 3 !important;
+}

@@ -421,13 +421,14 @@ const saveReadingResult = async (reading: ReadingResult) => {
   const handlePickCard = (index: number) => {
     if (!selectedType) return;
     const maxCards = selectedType === ReadingType.YES_NO ? 1 : 3;
+    const realNumber = dbCards[index]?.number ?? index;
 
     setPickedIndices(prev => {
-      if (prev.find(p => p.index === index)) {
-        return prev.filter(p => p.index !== index);
+      if (prev.find(p => p.index === realNumber)) {
+        return prev.filter(p => p.index !== realNumber);
       }
       if (prev.length < maxCards) {
-        return [...prev, { index, isReversed: Math.random() < 0.5 }];
+        return [...prev, { index: realNumber, isReversed: Math.random() < 0.5 }];
       }
       return prev;
     });
@@ -1145,8 +1146,9 @@ const saveReadingResult = async (reading: ReadingResult) => {
                 style={{ scrollSnapType: 'x proximity' }}
               >
                 {Array.from({ length: TOTAL_DECK_SIZE }).map((_, idx) => {
-                  const isPicked = pickedIndices.find(p => p.index === idx);
-                  const pickOrder = pickedIndices.findIndex(p => p.index === idx) + 1;
+                  const realNumber = dbCards[idx]?.number ?? idx;
+                  const isPicked = pickedIndices.find(p => p.index === realNumber);
+                  const pickOrder = pickedIndices.findIndex(p => p.index === realNumber) + 1;
                   
                   return (
                     <div 
