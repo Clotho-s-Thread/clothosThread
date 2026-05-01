@@ -28,7 +28,7 @@ const HomeView: React.FC<HomeViewProps> = ({
       <StreamUIOverlay />
       
       {/* --- 히어로 섹션 --- */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center">
+      <section className="relative min-h-screen flex flex-col items-center justify-center -mt-40">
         <div className="text-center relative z-10 px-6">
           <div className="flex justify-center gap-4 mb-8">
             <Star className="w-4 h-4 rose-gold-text" />
@@ -38,18 +38,18 @@ const HomeView: React.FC<HomeViewProps> = ({
             <Star className="w-4 h-4 rose-gold-text" />
           </div>
           
-          <h1 className="font-cinzel text-6xl md:text-9xl lg:text-[10rem] tracking-[0.1em] text-white leading-none mb-4">
+          <h1 className="font-cinzel text-6xl md:text-9xl lg:text-[10rem] tracking-[0.1em] text-white leading-none mb-6">
             CLOTHO
           </h1>
           
-          <div className="flex items-center justify-center gap-8 mb-16">
+          <div className="flex items-center justify-center gap-8 mb-20">
             <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-[#c58e71]" />
             <span className="font-playfair italic text-2xl md:text-3xl rose-gold-text tracking-[0.2em]">The Digital Oracle</span>
             <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-[#c58e71]" />
           </div>
           
           {/* 덱 테마 선택 위젯 */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-12">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-16">
             <div className="flex items-center gap-4 px-6 py-3 bg-rose-gold/5 border border-rose-gold/20 rounded-full">
               <div className="w-10 h-10 rounded-full overflow-hidden border border-rose-gold/40 bg-slate-900">
                 <img 

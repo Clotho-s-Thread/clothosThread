@@ -16,7 +16,35 @@ import Checkout from '../components/Checkout';
 import SubscriptionPurchase from '../components/SubscriptionPurchase';
 import { Moon, Sparkles, RefreshCw, ArrowRight, Star, Compass, Sun, Eye, ChevronDown, Send, Hexagon, ChevronLeft, ChevronRight, User as UserIcon, MessageCircle, UserPlus, Info, Lock } from 'lucide-react';
 
+// ==========================================
+// 📌 카드 뒷면 디자인 데이터
+// ==========================================
+const CARD_BACK_DESIGNS = [
+  {
+    id: 'mystical-soul',
+    name: '신비로운 영혼',
+    description: '고양이와 달로 이루어진 신비로운 디자인',
+    imageUrl: '/images/card-back2.png',
+    cssFilter: 'brightness(1) saturate(1)'
+  },
+  {
+    id: 'classic',
+    name: '클래식',
+    description: '기본 타로 카드 디자인',
+    imageUrl: '/images/card-back.png',
+    cssFilter: 'brightness(1) saturate(1)'
+  }
+];
+
+const CARD_BACK_IMAGE_MAP: Record<string, string> = {
+  'mystical-soul': '/images/card-back2.png',
+  'classic': '/images/card-back.png'
+};
+
 const App: React.FC = () => {
+  // ==========================================
+  // 📍 상태 정의
+  // ==========================================
   const [state, setState] = useState<AppState>(AppState.HOME);
   const [selectedType, setSelectedType] = useState<ReadingType | null>(null);
   const [question, setQuestion] = useState('');
@@ -41,6 +69,10 @@ const App: React.FC = () => {
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+
+  // ✅ 뒷면 카드 디자인 상태
+  const [selectedCardBackDesign, setSelectedCardBackDesign] = useState<string>('mystical-soul');
+  const [deckTab, setDeckTab] = useState<'front' | 'back'>('front');
 
   const TOTAL_DECK_SIZE = 78;
 
@@ -104,7 +136,6 @@ const App: React.FC = () => {
   // ==========================================
   // 🎯 DB 저장 함수 1️⃣: 타로 읽기 결과 저장
   // ==========================================
-// saveReadingResult 함수 (page.tsx에서 교체)
 const saveReadingResult = async (reading: ReadingResult) => {
   if (!user || !user.id) {
     console.error('❌ 사용자 정보 없음');
@@ -116,7 +147,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     console.log('📤 타로 읽기 결과 저장 시작...');
     console.log('📝 user.id:', user.id);
     
-    // 1️⃣ API 호출: Reading 테이블에 저장
     const response = await fetch('/api/readings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -124,12 +154,11 @@ const saveReadingResult = async (reading: ReadingResult) => {
         question: reading.question,
         spreadType: reading.type === ReadingType.YES_NO ? 'one-card' : 'three-card',
         fullAnswer: reading.interpretation,
-        userId: user.id,  // ✅ userId로 변경
-        // ReadingCard들 (카드 배치 정보)
+        userId: user.id,
         cards: reading.cards.map((card: any, index: number) => ({
-          cardId: card.id || card.number, // DB 카드 ID
-          position: index + 1, // 1:첫번째, 2:두번째, 3:세번째
-          orientation: card.isReversed ? 'reversed' : 'upright' // 정방향/역방향
+          cardId: card.id || card.number,
+          position: index + 1,
+          orientation: card.isReversed ? 'reversed' : 'upright'
         }))
       })
     });
@@ -150,7 +179,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
 };
 
   // ==========================================
-  // 🎯 DB 저장 함수 2️⃣: 포인트 충전 & PointLog 저장
+  // 🎯 DB 저장 함수 2️⃣: 포인트 충전
   // ==========================================
   const handlePurchasePoints = async (pointsToAdd: number) => {
     if (!user) {
@@ -161,13 +190,12 @@ const saveReadingResult = async (reading: ReadingResult) => {
     try {
       console.log('📤 포인트 충전 시작:', pointsToAdd);
 
-      // 1️⃣ API 호출: User의 point 업데이트 + PointLog 생성
       const response = await fetch(`/api/users/${user.id}/points`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: pointsToAdd,
-          reason: '포인트 충전' // PointLog의 reason 필드
+          reason: '포인트 충전'
         })
       });
 
@@ -177,7 +205,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
       const updatedUser = await response.json();
 
-      // 2️⃣ UI 상태 업데이트
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
 
@@ -204,7 +231,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     try {
       console.log('📤 전문가 등록 시작...');
 
-      // 1️⃣ API 호출: ExpertProfile 생성
       const response = await fetch('/api/expert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -212,8 +238,8 @@ const saveReadingResult = async (reading: ReadingResult) => {
           id: user.id,
           nickname: regData.name,
           intro: regData.description,
-          specialty: regData.specialization, // "연애, 재물, 진로" 형태로 저장
-          pricePerChat: 10000 // 기본 상담료
+          specialty: regData.specialization,
+          pricePerChat: 10000
         })
       });
 
@@ -223,7 +249,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
       const expertProfile = await response.json();
 
-      // 2️⃣ 로컬 마스터 목록 업데이트 (UI용)
       const newMaster: TarotMaster = {
         id: `m-${expertProfile.id}`,
         name: regData.name,
@@ -248,12 +273,11 @@ const saveReadingResult = async (reading: ReadingResult) => {
   };
 
   // ==========================================
-  // 🎯 타로 읽기 최종 실행 ✅ 완벽한 디버깅 버전
+  // 🎯 타로 읽기 최종 실행
   // ==========================================
   const finalizeSelection = async () => {
     console.log("🚀 [finalizeSelection] 함수 시작");
     
-    // ✅ 1️⃣ 필수 데이터 검증
     if (!selectedType) {
       console.error("❌ selectedType이 없음");
       alert("읽기 타입을 선택하세요");
@@ -261,16 +285,13 @@ const saveReadingResult = async (reading: ReadingResult) => {
     }
 
     const requiredCards = selectedType === ReadingType.YES_NO ? 1 : 3;
-    console.log(`📌 필요 카드 수: ${requiredCards}, 선택된 카드 수: ${pickedIndices.length}`);
 
     if (pickedIndices.length < requiredCards) {
-      console.error(`❌ 카드 부족 (필요: ${requiredCards}, 선택: ${pickedIndices.length})`);
       alert(`${requiredCards}개의 카드를 선택하세요`);
       return;
     }
 
     if (!question.trim()) {
-      console.error("❌ question이 비어있음");
       alert("질문을 입력하세요");
       return;
     }
@@ -279,9 +300,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     setState(AppState.RESULT);
 
     try {
-      console.log("📤 [API 요청 준비]");
-
-      // ✅ 2️⃣ 전송할 데이터 구성 및 검증
       const requestData = {
         messages: [{ 
           role: 'user', 
@@ -290,35 +308,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
         selectedCards: pickedIndices
       };
 
-      // ✅ 3️⃣ 데이터 상세 로깅
-      console.log("📋 [전송 데이터]");
-      console.log("  question:", question);
-      console.log("  selectedType:", selectedType);
-      console.log("  pickedIndices:", pickedIndices);
-      console.log("  pickedIndices 길이:", pickedIndices.length);
-      
-      // 각 카드 정보 확인
-      pickedIndices.forEach((card, idx) => {
-        console.log(`  카드 ${idx + 1}:`, {
-          index: card.index,
-          isReversed: card.isReversed,
-          type: typeof card.index,
-          reversedType: typeof card.isReversed
-        });
-      });
-
-      // ✅ 4️⃣ JSON 직렬화 가능 여부 확인
-      try {
-        const jsonString = JSON.stringify(requestData);
-        console.log("✅ JSON 직렬화 성공");
-        console.log("📦 JSON 크기:", jsonString.length, "bytes");
-      } catch (jsonError) {
-        console.error("❌ JSON 직렬화 실패:", jsonError);
-        throw new Error("데이터 직렬화 실패");
-      }
-
-      // ✅ 5️⃣ API 호출
-      console.log("🌐 [API 호출 시작]");
       const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
         method: 'POST',
         headers: { 
@@ -327,47 +316,26 @@ const saveReadingResult = async (reading: ReadingResult) => {
         body: JSON.stringify(requestData)
       });
 
-      // ✅ 6️⃣ 응답 상태 확인
-      console.log("📥 [API 응답]");
-      console.log("  상태 코드:", res.status);
-      console.log("  상태 텍스트:", res.statusText);
-      console.log("  Content-Type:", res.headers.get('content-type'));
-
-      // ✅ 7️⃣ 응답 본문 파싱
       let data;
       try {
         data = await res.json();
-        console.log("📦 응답 데이터:", data);
       } catch (parseError) {
         console.error("❌ JSON 파싱 실패:", parseError);
         alert("API 응답을 파싱할 수 없습니다");
         return;
       }
 
-      // ✅ 8️⃣ 상태 코드별 처리
       if (!res.ok) {
-        console.error("❌ API 에러 (상태:", res.status + ")");
-        console.error("   에러 메시지:", data.error || data.message);
         alert(`타로 읽기 실패: ${data.error || '알 수 없는 오류'}`);
         setState(AppState.QUESTION_INPUT);
         return;
       }
 
-      // ✅ 9️⃣ 성공 응답 확인
-      console.log("✅ [API 성공]");
-      if (!data.text) {
-        console.error("❌ 응답에 text 필드가 없음");
+      if (!data.text || !data.cards || data.cards.length === 0) {
         alert("API 응답이 불완전합니다");
         return;
       }
 
-      if (!data.cards || data.cards.length === 0) {
-        console.error("❌ 응답에 cards 필드가 없음");
-        alert("카드 정보가 없습니다");
-        return;
-      }
-
-      // ✅ 🔟 읽기 결과 생성
       const reading: ReadingResult = {
         question,
         type: selectedType,
@@ -375,32 +343,19 @@ const saveReadingResult = async (reading: ReadingResult) => {
         interpretation: data.text
       };
 
-      console.log("✅ [읽기 결과]");
-      console.log("  질문:", reading.question);
-      console.log("  타입:", reading.type);
-      console.log("  카드 수:", reading.cards.length);
-      console.log("  해석 길이:", reading.interpretation.length);
-
-      // ✅ 1️⃣1️⃣ DB 저장 (선택사항)
       if (user) {
         const savedReading = await saveReadingResult(reading);
         if (savedReading) {
           reading.id = savedReading.id;
-          console.log("✅ DB 저장 완료:", reading.id);
         }
       }
 
-      // ✅ 1️⃣2️⃣ 상태 업데이트
       setReadingResult(reading);
       setChatMessages([]);
       console.log("✅ [finalizeSelection] 완료");
 
     } catch (error) {
       console.error("❌ [finalizeSelection] 에러:", error);
-      if (error instanceof Error) {
-        console.error("   에러 메시지:", error.message);
-        console.error("   스택:", error.stack);
-      }
       alert("타로 읽기 중 오류가 발생했습니다");
       setState(AppState.QUESTION_INPUT);
     } finally {
@@ -476,9 +431,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     }
   };
 
-  // ==========================================
-  // 📍 채팅 메시지 전송 (선택사항: 메시지 저장 가능)
-  // ==========================================
   const handleSendMessage = async (isConsultationMode: boolean = false) => {
     if (!userInput.trim() || isLoading) return;
 
@@ -503,7 +455,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
         })
       });
 
-      // ✅ 스트리밍 방식으로 응답 처리
       const reader = res.body?.getReader();
       if (!reader) {
         throw new Error('응답 스트림을 읽을 수 없습니다');
@@ -515,14 +466,11 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
       while (true) {
         const { done, value } = await reader.read();
-
         if (done) break;
 
-        // 스트리밍된 텍스트 디코딩
         const chunk = decoder.decode(value, { stream: true });
         aiText += chunk;
 
-        // AI 메시지가 없으면 먼저 추가
         if (!assistantMsgAdded) {
           setChatMessages(prev => [
             ...prev,
@@ -530,7 +478,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
           ]);
           assistantMsgAdded = true;
         } else {
-          // 기존 AI 메시지 업데이트 (실시간으로 글자가 추가됨)
           setChatMessages(prev => {
             const updated = [...prev];
             const lastMsg = updated[updated.length - 1];
@@ -545,7 +492,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
         }
       }
 
-      // 최종 전체 텍스트로 한 번 더 업데이트
       setChatMessages(prev => {
         const updated = [...prev];
         const lastMsg = updated[updated.length - 1];
@@ -572,10 +518,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
     }
   };
 
-  // ==========================================
-  // 🎨 렌더링 함수들
-  // ==========================================
-
+  // 렌더링 함수들...
   const renderArcanaView = (type: 'Major' | 'Minor') => (
     <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen pb-40">
       <StreamUIOverlay />
@@ -645,86 +588,172 @@ const saveReadingResult = async (reading: ReadingResult) => {
         <p className="font-playfair text-xl text-white/60 italic">당신의 영혼과 공명하는 실타래를 선택하세요.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 max-w-5xl mx-auto">
-        {TAROT_DECKS.map((deck) => {
-          const isComingSoon = deck.id !== 'deck-classic';
+      {/* 앞면/뒷면 탭 */}
+      <div className="flex justify-center gap-8 mb-16 relative z-10">
+        <button
+          onClick={() => setDeckTab('front')}
+          className={`font-cinzel tracking-[0.3em] uppercase text-lg pb-4 border-b-2 transition-all ${
+            deckTab === 'front'
+              ? 'text-white border-rose-gold'
+              : 'text-slate-500 border-transparent hover:text-slate-300'
+          }`}
+        >
+          앞면 카드 테마
+        </button>
+        <button
+          onClick={() => setDeckTab('back')}
+          className={`font-cinzel tracking-[0.3em] uppercase text-lg pb-4 border-b-2 transition-all ${
+            deckTab === 'back'
+              ? 'text-white border-rose-gold'
+              : 'text-slate-500 border-transparent hover:text-slate-300'
+          }`}
+        >
+          뒷면 카드 테마
+        </button>
+      </div>
 
-          return (
-            <div 
-              key={deck.id}
+      {/* 앞면 카드 테마 */}
+      {deckTab === 'front' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 max-w-5xl mx-auto">
+          {TAROT_DECKS.map((deck) => {
+            const isComingSoon = deck.id !== 'deck-classic';
+
+            return (
+              <div 
+                key={deck.id}
+                className={`group transition-all duration-500 ${
+                  isComingSoon 
+                    ? 'cursor-not-allowed opacity-50' 
+                    : selectedDeck.id === deck.id 
+                      ? 'scale-105' 
+                      : 'hover:scale-102 opacity-80 hover:opacity-100'
+                }`}
+              >
+                <StreamFrame className={`h-full flex flex-col items-center p-6 transition-all ${
+                  isComingSoon
+                    ? 'border-[#c58e711a] bg-slate-900/30'
+                    : selectedDeck.id === deck.id 
+                      ? 'border-rose-gold shadow-[0_0_30px_rgba(197,142,113,0.3)] bg-[#c58e711a]' 
+                      : 'border-[#c58e7133] hover:border-[#c58e7166]'
+                }`}>
+                  <div 
+                    onClick={() => {
+                      if (!isComingSoon) {
+                        setSelectedDeck(deck);
+                      }
+                    }}
+                    className="w-full aspect-[2/3] mb-6 overflow-hidden relative bg-[#0a0812] border border-rose-gold/10 flex flex-col items-center justify-center rounded-lg cursor-pointer"
+                  >
+                    {isComingSoon ? (
+                      <div className="flex flex-col items-center justify-center text-slate-600 gap-4">
+                        <Lock className="w-8 h-8 opacity-30" />
+                        <span className="font-cinzel tracking-[0.3em] text-[10px] uppercase opacity-50">Coming Soon</span>
+                      </div>
+                    ) : (
+                      <>
+                        <img 
+                          src={deck.thumbnail} 
+                          alt={deck.name} 
+                          style={{ filter: deck.cssFilter }}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b1a] via-transparent to-transparent opacity-60" />
+                        {selectedDeck.id === deck.id && (
+                          <div className="absolute top-4 right-4 bg-rose-gold text-slate-950 p-2 rounded-full shadow-lg">
+                            <Star className="w-4 h-4" />
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  
+                  <h3 className={`font-cinzel text-xl mb-2 tracking-widest text-center transition-colors ${
+                    isComingSoon ? 'text-slate-600' : 'text-white'
+                  }`}>
+                    {isComingSoon ? ' ' : deck.nameKo}
+                  </h3>
+                  
+                  <p className={`font-playfair text-xs text-center leading-relaxed italic ${
+                    isComingSoon ? 'text-slate-700' : 'text-white/40'
+                  }`}>
+                    {isComingSoon ? '새로운 운명의 실타래를 풀어내고 있습니다. 곧 만나보실 수 있습니다.' : deck.description}
+                  </p>
+                  
+                  <div className="mt-6 pt-6 border-t border-[#c58e711a] w-full flex justify-center">
+                    <div className={`px-4 py-1 text-[10px] font-cinzel tracking-[0.2em] uppercase border ${
+                      isComingSoon 
+                        ? 'border-slate-800/50 text-slate-600' 
+                        : selectedDeck.id === deck.id 
+                          ? 'bg-rose-gold text-slate-950 border-rose-gold' 
+                          : 'text-rose-gold border-rose-gold/30'
+                    }`}>
+                      {isComingSoon ? '준비 중' : selectedDeck.id === deck.id ? '현재 선택됨' : '선택하기'}
+                    </div>
+                  </div>
+                </StreamFrame>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 뒷면 카드 테마 */}
+      {deckTab === 'back' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 max-w-5xl mx-auto">
+          {CARD_BACK_DESIGNS.map((backDesign) => (
+            <div
+              key={backDesign.id}
               onClick={() => {
-                if (isComingSoon) return;
-                setSelectedDeck(deck);
-                setState(AppState.HOME);
+                setSelectedCardBackDesign(backDesign.id);
               }}
-              className={`group transition-all duration-500 ${
-                isComingSoon 
-                  ? 'cursor-not-allowed opacity-50' 
-                  : selectedDeck.id === deck.id 
-                    ? 'scale-105 cursor-pointer' 
-                    : 'hover:scale-102 opacity-80 hover:opacity-100 cursor-pointer'
+              className={`group transition-all duration-500 cursor-pointer ${
+                selectedCardBackDesign === backDesign.id
+                  ? 'scale-105'
+                  : 'hover:scale-102 opacity-80 hover:opacity-100'
               }`}
             >
               <StreamFrame className={`h-full flex flex-col items-center p-6 transition-all ${
-                isComingSoon
-                  ? 'border-[#c58e711a] bg-slate-900/30'
-                  : selectedDeck.id === deck.id 
-                    ? 'border-rose-gold shadow-[0_0_30px_rgba(197,142,113,0.3)] bg-[#c58e711a]' 
-                    : 'border-[#c58e7133] hover:border-[#c58e7166]'
+                selectedCardBackDesign === backDesign.id
+                  ? 'border-rose-gold shadow-[0_0_30px_rgba(197,142,113,0.3)] bg-[#c58e711a]'
+                  : 'border-[#c58e7133] hover:border-[#c58e7166]'
               }`}>
-                <div className="w-full aspect-[2/3] mb-6 overflow-hidden relative bg-[#0a0812] border border-rose-gold/10 flex flex-col items-center justify-center">
-                  
-                  {isComingSoon ? (
-                    <div className="flex flex-col items-center justify-center text-slate-600 gap-4">
-                      <Lock className="w-8 h-8 opacity-30" />
-                      <span className="font-cinzel tracking-[0.3em] text-[10px] uppercase opacity-50">Coming Soon</span>
+                <div className="w-full aspect-[2/3] mb-6 overflow-hidden relative bg-[#0a0812] border border-rose-gold/10 flex flex-col items-center justify-center rounded-lg">
+                  <img
+                    src={backDesign.imageUrl}
+                    alt={backDesign.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    style={{ filter: backDesign.cssFilter }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b1a] via-transparent to-transparent opacity-40" />
+                  {selectedCardBackDesign === backDesign.id && (
+                    <div className="absolute top-4 right-4 bg-rose-gold text-slate-950 p-2 rounded-full shadow-lg">
+                      <Star className="w-4 h-4" />
                     </div>
-                  ) : (
-                    <>
-                      <img 
-                        src={deck.thumbnail} 
-                        alt={deck.name} 
-                        style={{ filter: deck.cssFilter }}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b1a] via-transparent to-transparent opacity-60" />
-                      {selectedDeck.id === deck.id && (
-                        <div className="absolute top-4 right-4 bg-rose-gold text-slate-950 p-2 rounded-full shadow-lg">
-                          <Star className="w-4 h-4" />
-                        </div>
-                      )}
-                    </>
                   )}
                 </div>
                 
-                <h3 className={`font-cinzel text-xl mb-2 tracking-widest text-center transition-colors ${
-                  isComingSoon ? 'text-slate-600' : 'text-white group-hover:text-rose-gold'
-                }`}>
-                  {isComingSoon ? ' ' : deck.nameKo}
+                <h3 className="font-cinzel text-xl mb-2 tracking-widest text-center transition-colors text-white">
+                  {backDesign.name}
                 </h3>
                 
-                <p className={`font-playfair text-xs text-center leading-relaxed italic ${
-                  isComingSoon ? 'text-slate-700' : 'text-white/40'
-                }`}>
-                  {isComingSoon ? '새로운 운명의 실타래를 풀어내고 있습니다. 곧 만나보실 수 있습니다.' : deck.description}
+                <p className="font-playfair text-xs text-center leading-relaxed italic text-white/40">
+                  {backDesign.description}
                 </p>
                 
                 <div className="mt-6 pt-6 border-t border-[#c58e711a] w-full flex justify-center">
                   <div className={`px-4 py-1 text-[10px] font-cinzel tracking-[0.2em] uppercase border ${
-                    isComingSoon 
-                      ? 'border-slate-800/50 text-slate-600' 
-                      : selectedDeck.id === deck.id 
-                        ? 'bg-rose-gold text-slate-950 border-rose-gold' 
-                        : 'text-rose-gold border-rose-gold/30'
+                    selectedCardBackDesign === backDesign.id
+                      ? 'bg-rose-gold text-slate-950 border-rose-gold'
+                      : 'text-rose-gold border-rose-gold/30'
                   }`}>
-                    {isComingSoon ? '준비 중' : selectedDeck.id === deck.id ? '현재 선택됨' : '선택하기'}
+                    {selectedCardBackDesign === backDesign.id ? '현재 선택됨' : '선택하기'}
                   </div>
                 </div>
               </StreamFrame>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 
@@ -954,7 +983,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
   const renderSecondaryInfo = () => {
     if (isLoading || !readingResult) return null;
-
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom duration-1000 delay-300 mt-12">
         {[
@@ -974,7 +1002,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
   const renderChatSection = () => {
     if (!readingResult) return null;
-
     return (
       <StreamFrame className="flex flex-col h-[500px] mt-12">
         <div className="text-center mb-8">
@@ -1017,9 +1044,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     );
   };
 
-  // ==========================================
-  // 🎯 메인 렌더 함수
-  // ==========================================
   return (
     <Header 
       user={user}
@@ -1072,7 +1096,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
             packages={POINT_PACKAGES}
             onBack={() => setState(AppState.SHOP)}
             onPurchase={(points) => {
-              // ✅ 포인트 > 0일 때만 DB에 저장
               if (points > 0) {
                 handlePurchasePoints(points);
               } else {
@@ -1147,8 +1170,11 @@ const saveReadingResult = async (reading: ReadingResult) => {
               >
                 {Array.from({ length: TOTAL_DECK_SIZE }).map((_, idx) => {
                   const realNumber = dbCards[idx]?.number ?? idx;
+                  const cardData = dbCards[idx];
                   const isPicked = pickedIndices.find(p => p.index === realNumber);
                   const pickOrder = pickedIndices.findIndex(p => p.index === realNumber) + 1;
+                  
+                  const cardBackImageUrl = CARD_BACK_IMAGE_MAP[selectedCardBackDesign];
                   
                   return (
                     <div 
@@ -1159,25 +1185,29 @@ const saveReadingResult = async (reading: ReadingResult) => {
                         first:ml-0 -ml-12 md:-ml-20`}
                       style={{ scrollSnapAlign: 'center' }}
                     >
-                      <StreamFrame className={`h-full flex items-center justify-center transition-all shadow-2xl
-                        ${isPicked ? 'border-rose-gold shadow-[0_0_40px_rgba(197,142,113,0.6)] bg-[#c58e712a]' : 'border-[#c58e712a] bg-slate-900/40'}`}>
+                      <div className={`h-full flex items-center justify-center transition-all shadow-2xl rounded-lg overflow-hidden border-2
+                        ${isPicked ? 'border-[#c58e71] shadow-[0_0_40px_rgba(197,142,113,0.8)]' : 'border-[#c58e7133] hover:border-[#c58e71]'}`}>
                         
-                        <div className="flex flex-col items-center justify-center w-full h-full">
-                          {isPicked ? (
-                            <div className="flex flex-col items-center animate-pulse scale-150">
-                              <span className="font-cinzel text-3xl rose-gold-text font-bold mb-1">{pickOrder}</span>
-                              <Star className="w-4 h-4 rose-gold-text" />
-                            </div>
-                          ) : (
+                        {cardData?.imageUrl ? (
+                          <>
+                            <img 
+                              src={cardBackImageUrl}
+                              alt="Card Back"
+                              className="w-full h-full object-cover"
+                            />
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center w-full h-full bg-gradient-to-br from-slate-900 to-slate-950">
                             <Hexagon className="w-8 h-8 text-[#c58e711a]" />
-                          )}
+                          </div>
+                        )}
+                      </div>
+
+                      {isPicked && (
+                        <div className="absolute -top-4 -right-4 bg-[#c58e71] text-slate-950 rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center shadow-lg border-2 border-white/20 animate-in zoom-in-75 duration-300">
+                          <span className="font-cinzel text-sm md:text-base font-bold">{pickOrder}</span>
                         </div>
-                        
-                        <div className="absolute inset-0 opacity-10 pointer-events-none">
-                          <div className="w-full h-full border border-dashed border-rose-gold/20 m-1 rounded-sm" />
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
-                      </StreamFrame>
+                      )}
                     </div>
                   );
                 })}

@@ -43,43 +43,48 @@ export const Header: React.FC<LayoutProps> = ({
       background: 'linear-gradient(135deg, #16192f 0%, #2a2750 25%, #3d3a70 50%, #3a2f60 75%, #1a1435 100%)',
       backgroundAttachment: 'fixed'
     }}>
-      {/* ✨ 100% 확실한 방법: z-index와 pointer-events를 테일윈드에 맡기지 않고 직접(style) 강제 주입합니다! */}
+      {/* ✨ 헤더 - 로고와 네비게이션 함께 */}
       <nav 
-        className={`fixed top-0 w-full transition-all duration-500 ${isScrolled ? 'py-4 border-b border-[#c58e7133]' : 'py-8'}`}
+        className={`fixed top-0 w-full transition-all duration-500 ${isScrolled ? 'border-b border-[#c58e7133]' : ''}`}
         style={{
           zIndex: 999999,
           pointerEvents: 'auto',
+          height: '140px',
           background: isScrolled 
-          ? 'linear-gradient(135deg, rgba(22, 25, 47, 0.9) 0%, rgba(42, 39, 80, 0.9) 25%, rgba(61, 58, 112, 0.9) 50%, rgba(58, 47, 96, 0.9) 75%, rgba(26, 20, 53, 0.9) 100%)'
+          ? 'linear-gradient(135deg, rgba(22, 25, 47, 0.95) 0%, rgba(42, 39, 80, 0.95) 25%, rgba(61, 58, 112, 0.95) 50%, rgba(58, 47, 96, 0.95) 75%, rgba(26, 20, 53, 0.95) 100%)'
           : 'transparent',
           backdropFilter: isScrolled ? 'blur(20px)' : 'none',
-          WebkitBackdropFilter: isScrolled ? 'blur(20px)' : 'none'
+          WebkitBackdropFilter: isScrolled ? 'blur(20px)' : 'none',
+          display: 'flex',
+          alignItems: 'center'
         }}
       >
-        <div className="max-w-7xl mx-auto px-10 flex justify-between items-center">
+        <div className="w-full px-20 flex justify-between items-center">
+          {/* 왼쪽: 로고 */}
           <div 
-            className="flex items-center gap-4 cursor-pointer group"
+            className="cursor-pointer group flex-shrink-0"
             onClick={onHomeClick}
           >
-            <div className="relative">
-               <Star className="w-8 h-8 text-[#c58e71] transition-all duration-700 group-hover:rotate-90" />
-               <div className="absolute inset-0 bg-[#c58e7133] blur-md rounded-full" />
-            </div>
-            <h1 className="font-cinzel text-3xl tracking-[0.4em] text-white group-hover:text-[#c58e71] transition-colors">CLOTHO</h1>
+            <img 
+              src="/images/logo_image.png" 
+              alt="Clotho's Thread Logo" 
+              className="h-32 w-auto object-contain transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-lg"
+            />
           </div>
-          
-          <div className="flex items-center gap-8 md:gap-12 font-cinzel text-xs tracking-[0.3em]">
+
+          {/* 오른쪽: 네비게이션 메뉴 */}
+          <div className="flex items-center gap-10 md:gap-14 font-cinzel text-xs tracking-[0.3em]">
             <button 
               onClick={onDeckClick} 
               className="text-white/40 hover:text-[#c58e71] transition-colors uppercase hidden lg:block"
-              style={{ fontSize: '18px' }}
+              style={{ fontSize: '16px' }}
             >
               타로 도감
             </button>
             <button 
               onClick={onMastersClick} 
               className="text-white/40 hover:text-[#c58e71] transition-colors uppercase flex items-center gap-2 font-bold"
-              style={{ fontSize: '18px' }}
+              style={{ fontSize: '16px' }}
             >
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">전문가 상담</span>
@@ -91,7 +96,7 @@ export const Header: React.FC<LayoutProps> = ({
                 <button 
                   onClick={onShopClick}
                   className="text-white/40 hover:text-[#c58e71] transition-colors uppercase flex items-center gap-2 font-bold"
-                  style={{ fontSize: '18px' }}
+                  style={{ fontSize: '16px' }}
                 >
                   <ShoppingBag className="w-4 h-4" />
                   <span className="hidden sm:inline">상점</span>
@@ -121,7 +126,7 @@ export const Header: React.FC<LayoutProps> = ({
                       <UserIcon className="w-4 h-4 text-[#c58e71]" />
                     )}
                   </div>
-                  <span className="text-white group-hover:text-[#c58e71] transition-colors hidden sm:block uppercase tracking-widest">{user.name} 님</span>
+                  <span className="text-white group-hover:text-[#c58e71] transition-colors hidden sm:block uppercase tracking-widest text-sm">{user.name} 님</span>
                 </button>
 
                 {isUserMenuOpen && (
@@ -176,6 +181,10 @@ export const Header: React.FC<LayoutProps> = ({
           </div>
         </div>
       </nav>
+
+      {/* 헤더 높이만큼 상단 여백 */}
+      <div style={{ height: '140px' }}></div>
+
       <main className="relative z-10">
         {children}
       </main>

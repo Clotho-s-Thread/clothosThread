@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import { Moon, Star, ArrowRight, Camera, ChevronLeft, Hexagon } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Moon, Star, ArrowRight, Camera, ChevronLeft, Hexagon, X } from 'lucide-react';
 
 interface User {
   id: string;
@@ -18,6 +18,19 @@ interface TarotDeck {
   description: string;
   thumbnail: string;
   seed: string;
+}
+
+interface ReadingHistory {
+  id: string;
+  question: string;
+  spreadType: string;
+  fullAnswer: string;
+  createdAt: string;
+  cards: Array<{
+    cardId: number;
+    position: number;
+    orientation: string;
+  }>;
 }
 
 interface MyPageContentProps {
@@ -43,7 +56,7 @@ const StreamUIOverlay = () => (
   </div>
 );
 
-// MyPageContent용 커스텀 StreamFrame (원래 스타일 유지)
+// MyPageContent용 커스텀 StreamFrame
 const MyPageStreamFrame: React.FC<{ children: React.ReactNode; className?: string }> = ({ 
   children, 
   className = "" 
@@ -66,11 +79,47 @@ const MyPageStreamFrame: React.FC<{ children: React.ReactNode; className?: strin
 );
 
 const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpdateUser }) => {
+  // ========== 프로필 편집 상태 ==========
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
   const [editProfileImage, setEditProfileImage] = useState(user?.profileImage || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ========== 리딩 기록 상태 ==========
+  const [readingHistory, setReadingHistory] = useState<ReadingHistory[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [selectedReadingDetail, setSelectedReadingDetail] = useState<ReadingHistory | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // ========== 리딩 기록 조회 ==========
+  useEffect(() => {
+    if (user?.id) {
+      fetchReadingHistory();
+    }
+  }, [user?.id]);
+
+  const fetchReadingHistory = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setIsLoadingHistory(true);
+      const response = await fetch(`/api/readings?userId=${user.id}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setReadingHistory(data);
+        console.log('✅ 리딩 기록 조회 완료:', data);
+      } else {
+        console.error('❌ 리딩 기록 조회 실패');
+      }
+    } catch (error) {
+      console.error('❌ 리딩 기록 조회 에러:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  // ========== 프로필 파일 변경 ==========
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -82,6 +131,7 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
     }
   };
 
+  // ========== 프로필 저장 ==========
   const handleSaveProfile = async () => {
     if (!user) return;
 
@@ -99,7 +149,6 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
       const data = await response.json();
 
       if (response.ok) {
-        // 로컬 상태 업데이트
         onUpdateUser({
           ...user,
           name: data.name,
@@ -120,6 +169,29 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
     setEditName(user?.name || '');
     setEditProfileImage(user?.profileImage || '');
     setIsEditingProfile(false);
+  };
+
+  // ========== 리딩 상세 보기 ==========
+  const handleReadingClick = (reading: ReadingHistory) => {
+    setSelectedReadingDetail(reading);
+    setIsDetailModalOpen(true);
+  };
+
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedReadingDetail(null);
+  };
+
+  // ========== 날짜 포맷 ==========
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -145,7 +217,6 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
               // 프로필 수정 모드
               <div className="w-full space-y-6">
                 <div className="flex flex-col items-center mb-4">
-                  {/* 숨겨진 파일 입력 */}
                   <input 
                     type="file" 
                     ref={fileInputRef}
@@ -154,7 +225,6 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
                     className="hidden"
                   />
                   
-                  {/* 프로필 이미지 선택 영역 */}
                   <div 
                     onClick={() => fileInputRef.current?.click()}
                     className="w-24 h-24 rounded-full border-2 border-[#c58e71] p-1 mb-4 relative group cursor-pointer overflow-hidden"
@@ -171,7 +241,6 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
                       </div>
                     )}
                     
-                    {/* 호버 시 카메라 아이콘 */}
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Camera className="w-6 h-6 text-white" />
                     </div>
@@ -182,7 +251,6 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
                   </p>
                 </div>
                 
-                {/* 닉네임 입력 필드 */}
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="font-cinzel text-[10px] text-[#c58e71] tracking-widest uppercase">
@@ -202,7 +270,6 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
                   </div>
                 </div>
 
-                {/* 확인/취소 버튼 */}
                 <div className="flex gap-2 pt-4">
                   <button 
                     onClick={handleSaveProfile}
@@ -240,7 +307,6 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
                   {user?.email}
                 </p>
                 
-                {/* 포인트 표시 */}
                 {user?.points !== undefined && (
                   <div className="mb-6 text-center">
                     <p className="font-cinzel text-[10px] text-white/40 tracking-widest uppercase mb-2">
@@ -252,7 +318,6 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
                   </div>
                 )}
                 
-                {/* 프로필 수정 버튼 */}
                 <button 
                   onClick={() => setIsEditingProfile(true)}
                   className="w-full py-3 border border-[#c58e71]/30 text-[#c58e71] font-cinzel text-xs tracking-[0.2em] hover:bg-[#c58e71]/10 transition-colors"
@@ -271,48 +336,52 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
             <h4 className="font-cinzel text-lg text-white mb-6 tracking-widest flex items-center gap-3">
               <Moon className="w-5 h-5 text-[#c58e71]" /> 최근 상담 내역
             </h4>
-            <div className="w-full space-y-4">
-              {/* 상담 기록 1 */}
-              <div 
-                className="p-4 rounded-sm flex justify-between items-center group hover:border-[#c58e71] transition-all cursor-pointer"
-                style={{
-                  background: 'rgba(232, 232, 232, 0.08)',
-                  border: '1px solid rgba(197, 142, 113, 0.3)'
-                }}
-              >
-                <div>
-                  <p className="text-white text-sm font-medium mb-1 tracking-wide">오늘의 운세 상담</p>
-                  <p className="text-xs text-white/40 font-cinzel tracking-widest">2026.03.27</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#c58e71]/40 group-hover:text-[#c58e71] group-hover:translate-x-1 transition-all" />
+            
+            {isLoadingHistory ? (
+              <div className="w-full text-center py-8 text-white/40">
+                <p className="font-playfair">로딩 중...</p>
               </div>
-              
-              {/* 상담 기록 2 */}
-              <div 
-                className="p-4 rounded-sm flex justify-between items-center group hover:border-[#c58e71] transition-all cursor-pointer opacity-60 hover:opacity-100"
-                style={{
-                  background: 'rgba(232, 232, 232, 0.08)',
-                  border: '1px solid rgba(197, 142, 113, 0.3)'
-                }}
-              >
-                <div>
-                  <p className="text-white text-sm font-medium mb-1 tracking-wide">연애운 심층 분석</p>
-                  <p className="text-xs text-white/40 font-cinzel tracking-widest">2026.03.20</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#c58e71]/40 group-hover:text-[#c58e71] group-hover:translate-x-1 transition-all" />
+            ) : readingHistory.length === 0 ? (
+              <div className="w-full text-center py-8 text-white/40">
+                <p className="font-playfair">아직 리딩 기록이 없습니다.</p>
               </div>
-
-              {/* 상담 기록 더보기 */}
-              <button 
-                className="w-full py-3 text-center text-[#c58e71]/50 font-cinzel text-[10px] tracking-[0.2em] hover:text-[#c58e71] transition-colors"
-                style={{
-                  background: 'rgba(232, 232, 232, 0.08)',
-                  border: '1px solid rgba(197, 142, 113, 0.3)'
-                }}
-              >
-                더 보기
-              </button>
-            </div>
+            ) : (
+              <div className="w-full space-y-4">
+                {readingHistory.slice(0, 5).map((reading) => (
+                  <div
+                    key={reading.id}
+                    onClick={() => handleReadingClick(reading)}
+                    className="p-4 rounded-sm flex justify-between items-center group hover:border-[#c58e71] transition-all cursor-pointer"
+                    style={{
+                      background: 'rgba(232, 232, 232, 0.08)',
+                      border: '1px solid rgba(197, 142, 113, 0.3)'
+                    }}
+                  >
+                    <div>
+                      <p className="text-white text-sm font-medium mb-1 tracking-wide">
+                        {reading.question.substring(0, 25)}{reading.question.length > 25 ? '...' : ''}
+                      </p>
+                      <p className="text-xs text-white/40 font-cinzel tracking-widest">
+                        {formatDate(reading.createdAt)}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-[#c58e71]/40 group-hover:text-[#c58e71] group-hover:translate-x-1 transition-all" />
+                  </div>
+                ))}
+                
+                {readingHistory.length > 5 && (
+                  <button 
+                    className="w-full py-3 text-center text-[#c58e71]/50 font-cinzel text-[10px] tracking-[0.2em] hover:text-[#c58e71] transition-colors"
+                    style={{
+                      background: 'rgba(232, 232, 232, 0.08)',
+                      border: '1px solid rgba(197, 142, 113, 0.3)'
+                    }}
+                  >
+                    더 보기 ({readingHistory.length}개)
+                  </button>
+                )}
+              </div>
+            )}
           </MyPageStreamFrame>
 
           {/* 현재 사용 중인 타로 덱 */}
@@ -345,6 +414,122 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
           </MyPageStreamFrame>
         </div>
       </div>
+
+      {/* 리딩 상세 모달 */}
+      {isDetailModalOpen && selectedReadingDetail && (
+        <div 
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[999999] p-6"
+          onClick={closeDetailModal}
+        >
+          <div
+            className="bg-[#0d0b1a] border border-[#c58e71]/30 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(135deg, rgba(13, 11, 26, 0.95) 0%, rgba(13, 11, 26, 0.95) 100%)',
+              backdropFilter: 'blur(20px)'
+            }}
+          >
+            {/* 닫기 버튼 */}
+            <button
+              onClick={closeDetailModal}
+              className="float-right text-[#c58e71] hover:text-white transition-colors mb-4"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* 제목 */}
+            <h3 className="font-cinzel text-2xl text-white mb-2 tracking-[0.2em] clear-both">
+              리딩 상세 기록
+            </h3>
+            
+            {/* 날짜 */}
+            <p className="text-xs text-white/40 font-cinzel tracking-widest uppercase mb-6">
+              {formatDate(selectedReadingDetail.createdAt)}
+            </p>
+
+            {/* 질문 */}
+            <div className="mb-8 pb-6 border-b border-[#c58e71]/20">
+              <p className="font-cinzel text-[10px] text-[#c58e71] tracking-widest uppercase mb-2">
+                질문
+              </p>
+              <p className="font-playfair text-lg text-white italic">
+                "{selectedReadingDetail.question}"
+              </p>
+            </div>
+
+            {/* 선택된 카드 - 이미지로 표시 */}
+            <div className="mb-8 pb-6 border-b border-[#c58e71]/20">
+              <p className="font-cinzel text-[10px] text-[#c58e71] tracking-widest uppercase mb-6">
+                선택된 카드 ({selectedReadingDetail.cards?.length || 0}장)
+              </p>
+              <div className="flex gap-8 flex-wrap justify-center">
+                {selectedReadingDetail.cards?.map((card, idx) => (
+                  <div
+                    key={idx}
+                    className="flex flex-col items-center"
+                  >
+                    {/* 카드 이미지 */}
+                    <div 
+                      className="w-28 aspect-[2/3] mb-4 rounded-lg border border-[#c58e71]/40 overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950 flex items-center justify-center relative group"
+                      style={{
+                        transform: card.orientation === 'reversed' ? 'scaleY(-1)' : 'none',
+                      }}
+                    >
+                      <img 
+                        src={`/images/tarot/${String(card.cardId).padStart(3, '0')}.png`}
+                        alt={`카드 #${card.cardId}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                      
+                      {/* 이미지 로드 실패 시 폴백 */}
+                      <div className="absolute inset-0 flex items-center justify-center text-[#c58e71]/40 font-cinzel text-xs">
+                        카드 #{card.cardId}
+                      </div>
+
+                      {/* 역방향 배지 */}
+                      {card.orientation === 'reversed' && (
+                        <div className="absolute top-2 right-2 bg-red-500/80 text-white text-[10px] px-2 py-1 rounded-full font-cinzel tracking-widest font-bold">
+                          역
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* 카드 정보 */}
+                    <p className="text-xs font-cinzel text-white mb-1 text-center">
+                      카드 #{card.cardId}
+                    </p>
+                    <p className="text-[10px] text-[#c58e71] uppercase">
+                      {card.orientation === 'upright' ? '정방향' : '역방향'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 해석 */}
+            <div>
+              <p className="font-cinzel text-[10px] text-[#c58e71] tracking-widest uppercase mb-4">
+                AI 해석
+              </p>
+              <p className="font-playfair text-white/80 leading-relaxed text-sm">
+                {selectedReadingDetail.fullAnswer}
+              </p>
+            </div>
+
+            {/* 닫기 버튼 */}
+            <button
+              onClick={closeDetailModal}
+              className="w-full mt-8 py-3 border border-[#c58e71]/30 text-[#c58e71] font-cinzel text-xs tracking-[0.2em] hover:bg-[#c58e71]/10 transition-colors"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

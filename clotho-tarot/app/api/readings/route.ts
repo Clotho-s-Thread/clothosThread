@@ -1,5 +1,5 @@
 // app/api/readings/route.ts
-// 타로 읽기 결과를 DB에 저장하는 API
+// 타로 읽기 결과를 DB에 저장하고 조회하는 API
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
@@ -132,38 +132,71 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ============ GET: 사용자의 Reading 조회 (선택사항) ============
+// ============ GET: 사용자의 Reading 조회 ============
 export async function GET(req: NextRequest) {
   try {
     const userId = req.nextUrl.searchParams.get('userId');
 
     if (!userId) {
+      console.warn('⚠️ [GET] userId 파라미터 누락');
       return NextResponse.json(
         { error: 'userId가 필요합니다' },
         { status: 400 }
       );
     }
 
-    console.log(`📖 [GET] 사용자 ${userId}의 Reading 조회 시작`);
+    console.log(`\n📖 [GET] 사용자 ${userId}의 Reading 조회 시작`);
+    console.log("━".repeat(60));
 
+    // ✅ Reading 조회 (cards 포함)
     const readings = await prisma.reading.findMany({
       where: { userId },
-      include: {
+      select: {
+        id: true,
+        question: true,
+        spreadType: true,
+        fullAnswer: true,
+        createdAt: true,
         cards: {
-          include: {
-            card: true
+          select: {
+            cardId: true,
+            position: true,
+            orientation: true
+          },
+          orderBy: {
+            position: 'asc'
           }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { 
+        createdAt: 'desc' 
+      }
     });
 
     console.log(`✅ [GET] ${readings.length}개 Reading 조회 완료`);
 
-    return NextResponse.json(readings);
+    // ✅ 응답 데이터 포맷팅
+    const formattedReadings = readings.map(reading => ({
+      id: reading.id,
+      question: reading.question,
+      spreadType: reading.spreadType,
+      fullAnswer: reading.fullAnswer,
+      createdAt: reading.createdAt,
+      cards: reading.cards
+    }));
+
+    console.log("━".repeat(60) + "\n");
+
+    return NextResponse.json(formattedReadings, { status: 200 });
 
   } catch (error) {
-    console.error('Reading 조회 에러:', error);
+    console.error('\n❌ Reading 조회 에러:', error);
+    console.error("━".repeat(60) + "\n");
+
+    if (error instanceof Error) {
+      console.error(`  메시지: ${error.message}`);
+    }
+
     return NextResponse.json(
       { error: 'Reading 조회에 실패했습니다' },
       { status: 500 }
