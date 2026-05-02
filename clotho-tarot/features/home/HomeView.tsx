@@ -128,14 +128,14 @@ const HomeView: React.FC<HomeViewProps> = ({
         <h2 className="font-cinzel text-3xl md:text-5xl text-white tracking-[0.5em] mb-24 uppercase text-center">아르카나 도감</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl w-full relative z-10">
            <div onClick={() => onArcanaViewClick(AppState.MAJOR_ARCANA_VIEW)} className="group cursor-pointer">
-              <StreamFrame className="h-64 flex flex-col items-center justify-center transition-all group-hover:scale-[1.05] group-hover:bg-[#c58e710a]">
+              <StreamFrame className="h-64 flex flex-col items-center justify-center transition-all group-hover:scale-[1.05] group-hover:bg-[#c58e710a] rounded-xl">
                  <h3 className="font-cinzel text-3xl text-white mb-2 tracking-[0.2em] group-hover:text-rose-gold transition-colors">메이저 아르카나</h3>
                  <p className="text-slate-400 font-playfair italic text-lg">운명의 거대한 흐름</p>
                  <div className="mt-6 w-12 h-[1px] bg-rose-gold/30 group-hover:w-24 transition-all" />
               </StreamFrame>
            </div>
            <div onClick={() => onArcanaViewClick(AppState.MINOR_ARCANA_VIEW)} className="group cursor-pointer">
-              <StreamFrame className="h-64 flex flex-col items-center justify-center transition-all group-hover:scale-[1.05] group-hover:bg-[#c58e710a]">
+              <StreamFrame className="h-64 flex flex-col items-center justify-center transition-all group-hover:scale-[1.05] group-hover:bg-[#c58e710a] rounded-xl">
                  <h3 className="font-cinzel text-3xl text-white mb-2 tracking-[0.2em] group-hover:text-rose-gold transition-colors">마이너 아르카나</h3>
                  <p className="text-slate-400 font-playfair italic text-lg">운명의 세밀한 흐름</p>
                  <div className="mt-6 w-12 h-[1px] bg-rose-gold/30 group-hover:w-24 transition-all" />

@@ -73,8 +73,24 @@ const App: React.FC = () => {
   // ✅ 뒷면 카드 디자인 상태
   const [selectedCardBackDesign, setSelectedCardBackDesign] = useState<string>('mystical-soul');
   const [deckTab, setDeckTab] = useState<'front' | 'back'>('front');
+  const [selectedCardDetail, setSelectedCardDetail] = useState<any>(null);
 
   const TOTAL_DECK_SIZE = 78;
+
+  // ==========================================
+  // 📍 리딩 상태 초기화 함수 (방법 2)
+  // ==========================================
+  const resetReadingState = () => {
+    setSelectedType(null);
+    setQuestion('');
+    setPickedIndices([]);
+    setReadingResult(null);
+    setChatMessages([]);
+    setUserInput('');
+    // ✅ 스크롤을 맨 위로 이동
+    window.scrollTo(0, 0);
+    console.log('✅ 리딩 상태 초기화됨');
+  };
 
   // ==========================================
   // 📍 useEffect: 페이지 로드 시 사용자 정보 복원
@@ -370,7 +386,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   const startReading = (type: ReadingType) => {
     setSelectedType(type);
     setState(AppState.QUESTION_INPUT);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
   };
 
   const handlePickCard = (index: number) => {
@@ -520,11 +536,13 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
   // 렌더링 함수들...
   const renderArcanaView = (type: 'Major' | 'Minor') => (
-    <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen pb-40">
+    <div className="pt-8 px-6 max-w-7xl mx-auto min-h-screen pb-40">
       <StreamUIOverlay />
       <div className="text-center mb-20 relative z-10">
         <button 
           onClick={() => {
+            resetReadingState();
+            window.scrollTo(0, 0);
             setState(AppState.HOME);
             setMinorSuitTab('All');
             setTimeout(() => deckSectionRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
@@ -555,28 +573,65 @@ const saveReadingResult = async (reading: ReadingResult) => {
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 relative z-10">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8 relative z-10">
         {dbCards.filter(card => {
           const cardSuit = getCardSuit(card.number);
           if (type === 'Major') return cardSuit === 'Major';
           if (minorSuitTab === 'All') return cardSuit !== 'Major';
           return cardSuit === minorSuitTab;
         }).map(card => (
-          <div key={card.id} className="relative group cursor-pointer aspect-[2/3] overflow-hidden">
-            <div className="absolute inset-0 border border-[#c58e7133] z-10 group-hover:border-rose-gold transition-colors" />
+          <div 
+            key={card.id} 
+            className="relative group cursor-pointer aspect-[2/3] rounded-xl" 
+            style={{ perspective: '1000px' }}
+            onClick={() => setSelectedCardDetail(card)}
+          >
+            <div className="absolute inset-0 border border-[#c58e7133] z-10 group-hover:border-rose-gold transition-all duration-300 rounded-xl group-hover:shadow-[0_0_50px_rgba(197,142,113,0.8)]" />
             <img 
               src={card.imageUrl} 
               alt={card.name} 
               style={{ filter: selectedDeck.cssFilter }} 
-              className="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 scale-110 group-hover:scale-100" 
+              className="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300 rounded-xl group-hover:shadow-[0_0_50px_rgba(197,142,113,0.8)]" 
             />
-            <div className="absolute bottom-0 inset-x-0 bg-slate-950/90 p-4 text-center transform translate-y-full group-hover:translate-y-0 transition-transform border-t border-rose-gold/20">
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-4 text-center rounded-b-xl">
               <p className="font-cinzel text-xs rose-gold-text tracking-widest uppercase mb-1">{card.name}</p>
               <p className="font-cinzel text-[10px] text-white/60 tracking-widest uppercase">{card.nameKo}</p>
             </div>
           </div>
         ))}
       </div>
+
+      {/* 카드 상세 모달 */}
+      {selectedCardDetail && (
+        <div 
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6" 
+          onClick={() => setSelectedCardDetail(null)}
+        >
+          <div 
+            className="relative w-full max-w-md" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setSelectedCardDetail(null)}
+              className="absolute -top-12 right-0 text-white hover:text-rose-gold text-2xl font-bold z-60"
+            >
+              ✕
+            </button>
+            <div className="flex flex-col items-center gap-6">
+              <img 
+                src={selectedCardDetail.imageUrl} 
+                alt={selectedCardDetail.name}
+                style={{ filter: selectedDeck.cssFilter }}
+                className="w-full max-w-sm h-auto rounded-xl shadow-[0_0_60px_rgba(197,142,113,0.8)]"
+              />
+              <div className="text-center text-white w-full px-4">
+                <h3 className="font-cinzel text-2xl mb-2 tracking-widest">{selectedCardDetail.name}</h3>
+                <p className="font-cinzel text-base text-rose-gold tracking-widest">{selectedCardDetail.nameKo}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -1047,24 +1102,47 @@ const saveReadingResult = async (reading: ReadingResult) => {
   return (
     <Header 
       user={user}
-      onHomeClick={resetReading}
+      onHomeClick={() => {
+        resetReadingState();
+        window.scrollTo(0, 0);
+        setState(AppState.HOME);
+      }}
       onDeckClick={() => {
+        resetReadingState();
         setState(AppState.HOME);
         setTimeout(() => deckSectionRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
       }}
-      onMastersClick={() => setState(AppState.MASTERS_VIEW)}
-      onMyPageClick={() => setState(AppState.MY_PAGE)}
+      onMastersClick={() => {
+        resetReadingState();
+        window.scrollTo(0, 0);
+        setState(AppState.MASTERS_VIEW);
+      }}
+      onMyPageClick={() => {
+        resetReadingState();
+        window.scrollTo(0, 0);
+        setState(AppState.MY_PAGE);
+      }}
       onLoginClick={() => setIsLoginModalOpen(true)}
       onLogout={handleLogout}
-      onShopClick={() => setState(AppState.SHOP)}
+      onShopClick={() => {
+        resetReadingState();
+        window.scrollTo(0, 0);
+        setState(AppState.SHOP);
+      }}
     >
       <div className="relative">
         {state === AppState.HOME && (
           <HomeView 
             selectedDeck={selectedDeck}
             onStartReading={startReading}
-            onDeckSelectClick={() => setState(AppState.DECK_SELECTION)}
+            onDeckSelectClick={() => {
+              resetReadingState();
+              window.scrollTo(0, 0);
+              setState(AppState.DECK_SELECTION);
+            }}
             onArcanaViewClick={(targetState) => {
+              resetReadingState();
+              window.scrollTo(0, 0);
               setState(targetState);
               setMinorSuitTab('All');
             }}
@@ -1120,52 +1198,81 @@ const saveReadingResult = async (reading: ReadingResult) => {
         )}
 
         {state === AppState.QUESTION_INPUT && (
-          <div className="pt-40 px-6 max-w-4xl mx-auto flex flex-col items-center min-h-screen">
+          <div className="fixed top-[140px] left-0 right-0 bottom-0 overflow-hidden px-6 flex flex-col items-center justify-center">
             <StreamUIOverlay />
-            <h2 className="font-cinzel text-3xl md:text-5xl text-white mb-20 tracking-[0.3em] uppercase text-center">의지의 속삭임</h2>
-            <StreamFrame className="w-full">
+            
+            {/* 뒤로가기 버튼 */}
+            <button
+              onClick={() => {
+                resetReadingState();
+                setState(AppState.HOME);
+              }}
+              className="absolute top-18 left-50 flex items-center gap-2 text-[#c58e71] hover:text-white transition-colors font-cinzel text-lg tracking-widest uppercase"
+            >
+              <ChevronLeft className="w-6 h-6" />
+              <span>홈으로 나가기</span>
+            </button>
+
+            <h2 className="font-cinzel text-3xl md:text-5xl text-white mb-10 tracking-[0.3em] uppercase text-center">의지의 속삭임</h2>
+            <StreamFrame className="w-full max-w-4xl">
               <textarea 
                 value={question} 
                 onChange={(e) => setQuestion(e.target.value)} 
-                className="w-full bg-transparent border-none focus:ring-0 text-white font-playfair text-2xl md:text-3xl leading-relaxed min-h-[300px] resize-none placeholder:text-slate-800" 
+                className="w-full bg-transparent border-none focus:ring-0 text-white font-playfair text-xl md:text-3xl leading-relaxed min-h-[280px] resize-none placeholder:text-slate-700" 
                 placeholder="당신의 질문은 무엇입니까?..." 
               />
             </StreamFrame>
-            <button onClick={() => setState(AppState.CARD_PICKING)} disabled={!question.trim()} className="mt-16 btn-celestial text-xl font-bold">운명의 데크로 나아가기</button>
+            <button onClick={() => setState(AppState.CARD_PICKING)} disabled={!question.trim()} className="mt-8 btn-celestial text-lg font-bold">운명의 데크로 나아가기</button>
           </div>
         )}
 
         {state === AppState.CARD_PICKING && (
-          <div className="pt-32 flex flex-col items-center min-h-screen pb-40 overflow-hidden relative">
+          <div className="fixed top-[140px] left-0 right-0 bottom-0 overflow-x-auto overflow-y-hidden flex flex-col bg-transparent">
             <StreamUIOverlay />
-            <div className="text-center mb-20 relative z-10 px-6">
-              <h2 className="font-cinzel text-3xl md:text-4xl text-white mb-4 tracking-[0.4em] uppercase">수평선 스프레드</h2>
-              <div className="flex items-center justify-center gap-4 rose-gold-text font-cinzel text-sm tracking-widest">
-                <div className="w-12 h-[1px] bg-[#c58e714d]" />
-                <span className="bg-[#0d0b1a] px-4">
-                  {pickedIndices.length} / {selectedType === ReadingType.YES_NO ? 1 : 3} 개의 실타래가 선택됨
+            
+            {/* 상단: 안내 문구 + 제목 */}
+            <div className="text-center pt-4 pb-3 px-6 flex-shrink-0 z-10 space-y-3 relative">
+              <button
+                onClick={() => {
+                  resetReadingState();
+                  setState(AppState.HOME);
+                }}
+                className="absolute top-18 left-50 flex items-center gap-2 text-[#c58e71] hover:text-white transition-colors font-cinzel text-lg tracking-widest uppercase"
+              >
+                <ChevronLeft className="w-6 h-6" />
+                <span>홈으로 나가기</span>
+              </button>
+              <p className="font-playfair text-sm md:text-base text-rose-gold/80 italic">
+                스와이프하여 지정된 카드 갯수만큼 선택해 주세요
+              </p>
+              <h2 className="font-cinzel text-3xl md:text-4xl text-white tracking-[0.4em] uppercase font-bold">수평선 스프레드</h2>
+              <div className="flex items-center justify-center gap-3 rose-gold-text font-cinzel text-lg md:text-xl tracking-widest">
+                <div className="w-8 h-[1px] bg-[#c58e714d]" />
+                <span className="px-3 font-bold">
+                  {pickedIndices.length} / {selectedType === ReadingType.YES_NO ? 1 : 3}
                 </span>
-                <div className="w-12 h-[1px] bg-[#c58e714d]" />
+                <div className="w-8 h-[1px] bg-[#c58e714d]" />
               </div>
             </div>
             
-            <div className="relative w-full max-w-[1800px] z-10 group">
+            {/* 중앙: 카드 영역 (세로만 고정, 가로 스크롤 가능) */}
+            <div className="relative w-full z-10 group flex-1 flex items-center overflow-hidden">
               <button 
                 onClick={() => scrollDeck('left')}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-4 bg-slate-950/80 border border-rose-gold/30 rounded-full text-rose-gold hover:bg-rose-gold hover:text-slate-950 transition-all opacity-0 group-hover:opacity-100"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-slate-950/80 border border-rose-gold/30 rounded-full text-rose-gold hover:bg-rose-gold hover:text-slate-950 transition-all opacity-0 group-hover:opacity-100"
               >
-                <ChevronLeft className="w-8 h-8" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
               <button 
                 onClick={() => scrollDeck('right')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-4 bg-slate-950/80 border border-rose-gold/30 rounded-full text-rose-gold hover:bg-rose-gold hover:text-slate-950 transition-all opacity-0 group-hover:opacity-100"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-slate-950/80 border border-rose-gold/30 rounded-full text-rose-gold hover:bg-rose-gold hover:text-slate-950 transition-all opacity-0 group-hover:opacity-100"
               >
-                <ChevronRight className="w-8 h-8" />
+                <ChevronRight className="w-5 h-5" />
               </button>
 
               <div 
                 ref={scrollContainerRef}
-                className="flex overflow-x-auto no-scrollbar py-20 px-[20vw] gap-1 cursor-grab active:cursor-grabbing"
+                className="flex overflow-x-auto no-scrollbar py-0 px-4 gap-3 cursor-grab active:cursor-grabbing w-full h-full items-center justify-center"
                 style={{ scrollSnapType: 'x proximity' }}
               >
                 {Array.from({ length: TOTAL_DECK_SIZE }).map((_, idx) => {
@@ -1181,21 +1288,18 @@ const saveReadingResult = async (reading: ReadingResult) => {
                       key={idx} 
                       onClick={() => handlePickCard(idx)} 
                       className={`relative flex-shrink-0 w-32 md:w-44 aspect-[2/3] cursor-pointer transition-all duration-500 transform 
-                        ${isPicked ? 'scale-110 -translate-y-12 z-20' : 'hover:-translate-y-6 hover:z-10 opacity-60 hover:opacity-100'}
-                        first:ml-0 -ml-12 md:-ml-20`}
+                        ${isPicked ? 'scale-110 -translate-y-8 z-20' : 'hover:-translate-y-6 hover:z-10 opacity-60 hover:opacity-100'}`}
                       style={{ scrollSnapAlign: 'center' }}
                     >
-                      <div className={`h-full flex items-center justify-center transition-all shadow-2xl rounded-lg overflow-hidden border-2
-                        ${isPicked ? 'border-[#c58e71] shadow-[0_0_40px_rgba(197,142,113,0.8)]' : 'border-[#c58e7133] hover:border-[#c58e71]'}`}>
+                      <div className={`h-full flex items-center justify-center transition-all shadow-xl rounded-lg overflow-hidden border-2
+                        ${isPicked ? 'border-[#c58e71] shadow-[0_0_30px_rgba(197,142,113,0.6)]' : 'border-[#c58e7133] hover:border-[#c58e71]'}`}>
                         
                         {cardData?.imageUrl ? (
-                          <>
-                            <img 
-                              src={cardBackImageUrl}
-                              alt="Card Back"
-                              className="w-full h-full object-cover"
-                            />
-                          </>
+                          <img 
+                            src={cardBackImageUrl}
+                            alt="Card Back"
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <div className="flex flex-col items-center justify-center w-full h-full bg-gradient-to-br from-slate-900 to-slate-950">
                             <Hexagon className="w-8 h-8 text-[#c58e711a]" />
@@ -1204,8 +1308,8 @@ const saveReadingResult = async (reading: ReadingResult) => {
                       </div>
 
                       {isPicked && (
-                        <div className="absolute -top-4 -right-4 bg-[#c58e71] text-slate-950 rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center shadow-lg border-2 border-white/20 animate-in zoom-in-75 duration-300">
-                          <span className="font-cinzel text-sm md:text-base font-bold">{pickOrder}</span>
+                        <div className="absolute -top-3 -right-3 bg-[#c58e71] text-slate-950 rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center shadow-lg border-2 border-white/20 animate-in zoom-in-75 duration-300">
+                          <span className="font-cinzel text-xs md:text-sm font-bold">{pickOrder}</span>
                         </div>
                       )}
                     </div>
@@ -1213,28 +1317,25 @@ const saveReadingResult = async (reading: ReadingResult) => {
                 })}
               </div>
               
-              <div className="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-r from-[#0d0b1a] to-transparent z-20 pointer-events-none" />
-              <div className="absolute right-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-l from-[#0d0b1a] to-transparent z-20 pointer-events-none" />
+              <div className="absolute left-0 top-0 bottom-0 w-8 md:w-32 bg-gradient-to-r from-[#0d0b1a] to-transparent z-20 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-8 md:w-32 bg-gradient-to-l from-[#0d0b1a] to-transparent z-20 pointer-events-none" />
             </div>
 
-            <div className="mt-20 flex flex-col md:flex-row items-center gap-10 relative z-10">
+            {/* 하단: 버튼 */}
+            <div className="flex items-center justify-center gap-8 px-6 py-4 flex-shrink-0 z-10">
               <button 
                 onClick={() => setPickedIndices([])} 
-                className="font-cinzel rose-gold-text tracking-[0.3em] hover:text-white transition-colors uppercase text-sm border-b border-[#c58e714d] pb-1"
+                className="font-cinzel rose-gold-text tracking-[0.2em] hover:text-white transition-colors uppercase text-sm md:text-base border-b-2 border-[#c58e714d] pb-1 whitespace-nowrap font-bold"
               >
-                실타래 다시 섞기
+                다시섞기
               </button>
               <button 
                 onClick={finalizeSelection} 
                 disabled={pickedIndices.length < (selectedType === ReadingType.YES_NO ? 1 : 3)} 
-                className="btn-celestial text-xl disabled:opacity-20 disabled:cursor-not-allowed group font-bold"
+                className="btn-celestial text-sm md:text-base disabled:opacity-20 disabled:cursor-not-allowed group font-bold px-8 py-3 whitespace-nowrap"
               >
-                운명 풀어내기 <ArrowRight className="inline-block ml-4 w-6 h-6 group-hover:translate-x-2 transition-transform" />
+                운명풀기 <ArrowRight className="inline-block ml-3 w-5 h-5 group-hover:translate-x-2 transition-transform" />
               </button>
-            </div>
-            
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 rose-gold-text/40 font-cinzel text-[10px] tracking-[0.3em] uppercase whitespace-nowrap px-4">
-              <ChevronLeft className="w-3 h-3" /> 스와이프하여 덱을 탐색하세요 <ChevronRight className="w-3 h-3" />
             </div>
           </div>
         )}

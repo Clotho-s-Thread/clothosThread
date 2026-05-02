@@ -22,14 +22,14 @@ interface SubscriptionPurchaseProps {
 
 const SubscriptionPurchase: React.FC<SubscriptionPurchaseProps> = ({ packages, onBack, onSubscribe }) => {
   return (
-    <div className="relative min-h-screen pt-32 pb-20 px-6">
+    <div className="fixed top-[140px] left-0 right-0 bottom-0 overflow-auto px-6 py-6">
       <StreamUIOverlay />
       <div className="max-w-6xl mx-auto relative z-10">
         <button 
           onClick={onBack}
-          className="flex items-center gap-2 text-[#c58e71] font-cinzel text-xs tracking-[0.3em] uppercase mb-12 hover:text-white transition-colors group"
+          className="flex items-center gap-3 text-[#c58e71] font-cinzel text-xl md:text-2xl tracking-widest uppercase mb-10 hover:text-white transition-colors group"
         >
-          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <ChevronLeft className="w-8 h-8 group-hover:-translate-x-1 transition-transform" />
           상점으로 돌아가기
         </button>
 
