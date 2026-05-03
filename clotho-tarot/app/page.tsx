@@ -8,7 +8,7 @@ import { TAROT_MASTERS, TAROT_DECKS, POINT_PACKAGES, SUBSCRIPTION_PACKAGES } fro
 import { interpretTarot, chatAboutReading } from '../lib/geminiService';
 import StreamFrame from '../components/StreamFrame';
 import StreamUIOverlay from '../components/StreamUIOverlay';
-import TarotResult from "../TarotResult";
+import TarotResult from "../components/TarotResult";
 import HomeView from '../features/home/HomeView';
 import Shop from '../components/Shop';
 import PointPurchase from '../components/PointPurchase';
