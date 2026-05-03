@@ -180,17 +180,19 @@ const TarotResult = ({
                   </div>
                 )}
               </StreamFrame>
-              <button
-                onClick={resetReading}
-                className="btn-celestial self-center font-bold px-12 py-4 mt-8 w-full"
-              >
-                새로운 탐색 시작
-              </button>
             </div>
           </div>
 
           {/* 아카이브 질문하기 - 아래 전체 너비 */}
           {renderChatSection && renderChatSection()}
+
+          {/* 새로운 탐색 시작 버튼 - 아카이브 아래 */}
+          <button
+            onClick={resetReading}
+            className="btn-celestial self-center font-bold px-12 py-4 w-full md:w-auto"
+          >
+            새로운 탐색 시작
+          </button>
         </div>
       )}
     </div>
