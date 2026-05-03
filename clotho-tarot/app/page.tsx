@@ -459,17 +459,17 @@ const saveReadingResult = async (reading: ReadingResult) => {
     setIsLoading(true);
 
     try {
-    const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: updatedMessages.map(m => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          content: m.content
-        })),
-        selectedCards: pickedIndices
-      })
-    });
+      const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: updatedMessages.map(m => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            content: m.content
+          })),
+          selectedCards: pickedIndices
+        })
+      });
 
       const reader = res.body?.getReader();
       if (!reader) {
@@ -1058,36 +1058,19 @@ const saveReadingResult = async (reading: ReadingResult) => {
   const renderChatSection = () => {
     if (!readingResult) return null;
     return (
-      <div className="flex flex-col gap-6 mt-12 w-full max-w-5xl mx-auto">
-        {/* 질문 입력 영역 */}
-        <StreamFrame className="p-6 md:p-10 w-full">
-          <div className="text-center mb-6">
+      <div className="flex flex-col gap-0 mt-12 w-full">
+        {/* 통합 질문 및 답변 프레임 */}
+        <StreamFrame className="flex flex-col min-h-[900px] p-8 md:p-12 w-full rounded-b-none">
+          {/* 제목 */}
+          <div className="text-center mb-8">
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
-          <div className="relative">
-            <input 
-              type="text" 
-              value={userInput} 
-              onChange={(e) => setUserInput(e.target.value)} 
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
-              placeholder="더 궁금한 점을 물어보세요" 
-              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-2xl px-8 md:px-12 py-5 md:py-6 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-800"
-            />
-            <button 
-              onClick={() => handleSendMessage(false)} 
-              className="absolute right-6 top-1/2 -translate-y-1/2 p-2 text-rose-gold hover:text-white transition-colors"
-            >
-              <Send className="w-6 h-6" />
-            </button>
-          </div>
-        </StreamFrame>
 
-        {/* 해석 표시 영역 */}
-        <StreamFrame className="flex flex-col min-h-[700px] p-8 md:p-10 w-full">
-          <div className="flex-1 overflow-y-auto pr-4 space-y-4 no-scrollbar">
+          {/* 답변 표시 영역 */}
+          <div className="flex-1 overflow-y-auto mb-8 pr-4 space-y-4 no-scrollbar">
             {chatMessages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
+                <div className={`max-w-[85%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
                   <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                 </div>
               </div>
@@ -1100,6 +1083,24 @@ const saveReadingResult = async (reading: ReadingResult) => {
               </div>
             )}
             <div ref={chatEndRef} />
+          </div>
+
+          {/* 질문 입력 영역 */}
+          <div className="relative pt-6 border-t border-[#c58e7133]">
+            <input 
+              type="text" 
+              value={userInput} 
+              onChange={(e) => setUserInput(e.target.value)} 
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
+              placeholder="더 궁금한 점을 물어보세요" 
+              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-2xl px-6 md:px-8 py-4 md:py-5 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-700"
+            />
+            <button 
+              onClick={() => handleSendMessage(false)} 
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-rose-gold hover:text-white transition-colors"
+            >
+              <Send className="w-6 h-6" />
+            </button>
           </div>
         </StreamFrame>
       </div>
