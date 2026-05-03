@@ -195,7 +195,7 @@ const MyPageContent: React.FC<MyPageContentProps> = ({ user, selectedDeck, onUpd
   };
 
   return (
-    <div className="pt-32 px-6 max-w-4xl mx-auto min-h-screen pb-40">
+    <div className="pt-8 px-6 max-w-4xl mx-auto min-h-screen pb-40">
       <StreamUIOverlay />
       
       {/* 제목 섹션 */}
