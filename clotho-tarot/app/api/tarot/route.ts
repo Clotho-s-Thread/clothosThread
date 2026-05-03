@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     // ✅ 6️⃣ Gemini API 호출
     console.log(`🌐 [${requestId}] Gemini API 호출 시작...`);
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-lite' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const result = await model.generateContent(userPrompt);
     const aiResponse = result.response.text();
 
