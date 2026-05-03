@@ -447,9 +447,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     }
   };
 
-  // ==========================================
-  // 🎯 ✅ 수정된 handleSendMessage: 스트리밍 → JSON 파싱
-  // ==========================================
   const handleSendMessage = async (isConsultationMode: boolean = false) => {
     if (!userInput.trim() || isLoading) return;
 
@@ -474,15 +471,54 @@ const saveReadingResult = async (reading: ReadingResult) => {
         })
       });
 
-      // ✅ JSON으로 파싱해서 text 필드만 꺼내기
-      const data = await res.json();
-      const aiText = data.text || '응답을 받을 수 없습니다.';
+      const reader = res.body?.getReader();
+      if (!reader) {
+        throw new Error('응답 스트림을 읽을 수 없습니다');
+      }
 
-      setChatMessages(prev => [
-        ...prev,
-        { role: 'assistant', content: aiText }
-      ]);
+      const decoder = new TextDecoder('utf-8');
+      let aiText = '';
+      let assistantMsgAdded = false;
 
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        aiText += chunk;
+
+        if (!assistantMsgAdded) {
+          setChatMessages(prev => [
+            ...prev,
+            { role: 'assistant', content: aiText }
+          ]);
+          assistantMsgAdded = true;
+        } else {
+          setChatMessages(prev => {
+            const updated = [...prev];
+            const lastMsg = updated[updated.length - 1];
+            if (lastMsg.role === 'assistant') {
+              updated[updated.length - 1] = {
+                ...lastMsg,
+                content: aiText
+              };
+            }
+            return updated;
+          });
+        }
+      }
+
+      setChatMessages(prev => {
+        const updated = [...prev];
+        const lastMsg = updated[updated.length - 1];
+        if (lastMsg.role === 'assistant') {
+          updated[updated.length - 1] = {
+            ...lastMsg,
+            content: aiText
+          };
+        }
+        return updated;
+      });
     } catch (error) {
       console.error('❌ 채팅 전송 에러:', error);
       setChatMessages(prev => [
@@ -1030,8 +1066,26 @@ const saveReadingResult = async (reading: ReadingResult) => {
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
 
+          {/* 질문 입력 영역 - 상단 고정 */}
+          <div className="relative mb-8 pb-6 border-b border-[#c58e7133]">
+            <input 
+              type="text" 
+              value={userInput} 
+              onChange={(e) => setUserInput(e.target.value)} 
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
+              placeholder="더 궁금한 점을 물어보세요" 
+              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-2xl px-6 md:px-8 py-4 md:py-5 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-700 pr-12"
+            />
+            <button 
+              onClick={() => handleSendMessage(false)} 
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-rose-gold hover:text-white transition-colors"
+            >
+              <Send className="w-6 h-6" />
+            </button>
+          </div>
+
           {/* 답변 표시 영역 */}
-          <div className="flex-1 overflow-y-auto mb-8 pr-4 space-y-4 no-scrollbar">
+          <div className="flex-1 overflow-y-auto pr-4 space-y-4 no-scrollbar">
             {chatMessages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
@@ -1047,24 +1101,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
               </div>
             )}
             <div ref={chatEndRef} />
-          </div>
-
-          {/* 질문 입력 영역 */}
-          <div className="relative pt-6 border-t border-[#c58e7133]">
-            <input 
-              type="text" 
-              value={userInput} 
-              onChange={(e) => setUserInput(e.target.value)} 
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
-              placeholder="더 궁금한 점을 물어보세요" 
-              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-2xl px-6 md:px-8 py-4 md:py-5 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-700 pr-12"
-            />
-            <button 
-              onClick={() => handleSendMessage(false)} 
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-rose-gold hover:text-white transition-colors"
-            >
-              <Send className="w-6 h-6" />
-            </button>
           </div>
         </StreamFrame>
       </div>
