@@ -459,17 +459,17 @@ const saveReadingResult = async (reading: ReadingResult) => {
     setIsLoading(true);
 
     try {
-      const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: updatedMessages.map(m => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            content: m.content
-          })),
-          selectedCards: pickedIndices
-        })
-      });
+    const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: updatedMessages.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          content: m.content
+        })),
+        selectedCards: pickedIndices
+      })
+    });
 
       const reader = res.body?.getReader();
       if (!reader) {
