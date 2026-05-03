@@ -447,6 +447,9 @@ const saveReadingResult = async (reading: ReadingResult) => {
     }
   };
 
+  // ==========================================
+  // 🎯 ✅ 수정된 handleSendMessage: 스트리밍 → JSON 파싱
+  // ==========================================
   const handleSendMessage = async (isConsultationMode: boolean = false) => {
     if (!userInput.trim() || isLoading) return;
 
@@ -471,54 +474,15 @@ const saveReadingResult = async (reading: ReadingResult) => {
         })
       });
 
-      const reader = res.body?.getReader();
-      if (!reader) {
-        throw new Error('응답 스트림을 읽을 수 없습니다');
-      }
+      // ✅ JSON으로 파싱해서 text 필드만 꺼내기
+      const data = await res.json();
+      const aiText = data.text || '응답을 받을 수 없습니다.';
 
-      const decoder = new TextDecoder('utf-8');
-      let aiText = '';
-      let assistantMsgAdded = false;
+      setChatMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: aiText }
+      ]);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        aiText += chunk;
-
-        if (!assistantMsgAdded) {
-          setChatMessages(prev => [
-            ...prev,
-            { role: 'assistant', content: aiText }
-          ]);
-          assistantMsgAdded = true;
-        } else {
-          setChatMessages(prev => {
-            const updated = [...prev];
-            const lastMsg = updated[updated.length - 1];
-            if (lastMsg.role === 'assistant') {
-              updated[updated.length - 1] = {
-                ...lastMsg,
-                content: aiText
-              };
-            }
-            return updated;
-          });
-        }
-      }
-
-      setChatMessages(prev => {
-        const updated = [...prev];
-        const lastMsg = updated[updated.length - 1];
-        if (lastMsg.role === 'assistant') {
-          updated[updated.length - 1] = {
-            ...lastMsg,
-            content: aiText
-          };
-        }
-        return updated;
-      });
     } catch (error) {
       console.error('❌ 채팅 전송 에러:', error);
       setChatMessages(prev => [
@@ -1058,9 +1022,9 @@ const saveReadingResult = async (reading: ReadingResult) => {
   const renderChatSection = () => {
     if (!readingResult) return null;
     return (
-      <div className="flex flex-col gap-0 mt-12 w-full">
+      <div className="flex flex-col gap-0 mt-8 w-full">
         {/* 통합 질문 및 답변 프레임 */}
-        <StreamFrame className="flex flex-col min-h-[900px] p-8 md:p-12 w-full rounded-b-none">
+        <StreamFrame className="flex flex-col min-h-[750px] p-8 md:p-10 w-full rounded-b-none">
           {/* 제목 */}
           <div className="text-center mb-8">
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
@@ -1093,7 +1057,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
               onChange={(e) => setUserInput(e.target.value)} 
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
               placeholder="더 궁금한 점을 물어보세요" 
-              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-2xl px-6 md:px-8 py-4 md:py-5 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-700"
+              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-2xl px-6 md:px-8 py-4 md:py-5 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-700 pr-12"
             />
             <button 
               onClick={() => handleSendMessage(false)} 

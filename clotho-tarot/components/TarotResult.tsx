@@ -148,42 +148,46 @@ const TarotResult = ({
         </div>
       ) : (
         /* --- 🃏 1장 스프레드 레이아웃 --- */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <div className="lg:col-span-4 flex flex-col gap-8">
-            {readingResult?.cards.map((card: any, i: number) => (
-              <RenderCard key={i} card={card} i={i} layoutType="1" />
-            ))}
-          </div>
+        <div className="flex flex-col gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div className="lg:col-span-4 flex flex-col gap-8">
+              {readingResult?.cards.map((card: any, i: number) => (
+                <RenderCard key={i} card={card} i={i} layoutType="1" />
+              ))}
+            </div>
 
-          <div className="lg:col-span-8 flex flex-col gap-12">
-            <StreamFrame className="min-h-[400px]">
-              <div className="flex items-center gap-6 mb-12 border-b border-[#c58e7133] pb-6">
-                <Compass className="w-8 h-8 rose-gold-text" />
-                <h4 className="font-cinzel text-2xl md:text-3xl text-white tracking-[0.3em] uppercase">
-                  운명의 판결
-                </h4>
-              </div>
-              {isLoading && !readingResult ? (
-                <div className="flex flex-col items-center justify-center h-64">
-                  <RefreshCw className="w-12 h-12 rose-gold-text animate-spin mb-8" />
-                  <p className="font-cinzel text-xl rose-gold-text tracking-widest uppercase">
-                    운명의 실타래를 풀어내는 중...
-                  </p>
+            <div className="lg:col-span-8 flex flex-col gap-12">
+              <StreamFrame className="min-h-[400px]">
+                <div className="flex items-center gap-6 mb-12 border-b border-[#c58e7133] pb-6">
+                  <Compass className="w-8 h-8 rose-gold-text" />
+                  <h4 className="font-cinzel text-2xl md:text-3xl text-white tracking-[0.3em] uppercase">
+                    운명의 판결
+                  </h4>
                 </div>
-              ) : (
-                <div className="prose prose-invert max-w-none text-slate-200 font-playfair text-xl md:text-2xl leading-[1.8] whitespace-pre-wrap">
-                  {readingResult?.interpretation}
-                </div>
-              )}
-            </StreamFrame>
-            {renderChatSection && renderChatSection()}
-            <button
-              onClick={resetReading}
-              className="btn-celestial self-center font-bold px-12 py-4"
-            >
-              새로운 탐색 시작
-            </button>
+                {isLoading && !readingResult ? (
+                  <div className="flex flex-col items-center justify-center h-64">
+                    <RefreshCw className="w-12 h-12 rose-gold-text animate-spin mb-8" />
+                    <p className="font-cinzel text-xl rose-gold-text tracking-widest uppercase">
+                      운명의 실타래를 풀어내는 중...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="prose prose-invert max-w-none text-slate-200 font-playfair text-xl md:text-2xl leading-[1.8] whitespace-pre-wrap">
+                    {readingResult?.interpretation}
+                  </div>
+                )}
+              </StreamFrame>
+              <button
+                onClick={resetReading}
+                className="btn-celestial self-center font-bold px-12 py-4"
+              >
+                새로운 탐색 시작
+              </button>
+            </div>
           </div>
+          
+          {/* renderChatSection을 grid 밖으로 이동 - 전체 너비 */}
+          {renderChatSection && renderChatSection()}
         </div>
       )}
     </div>
