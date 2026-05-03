@@ -8,7 +8,7 @@ import { TAROT_MASTERS, TAROT_DECKS, POINT_PACKAGES, SUBSCRIPTION_PACKAGES } fro
 import { interpretTarot, chatAboutReading } from '../lib/geminiService';
 import StreamFrame from '../components/StreamFrame';
 import StreamUIOverlay from '../components/StreamUIOverlay';
-import TarotResult from "../components/TarotResult";
+import TarotResult from "../TarotResult";
 import HomeView from '../features/home/HomeView';
 import Shop from '../components/Shop';
 import PointPurchase from '../components/PointPurchase';
@@ -636,7 +636,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   );
 
   const renderDeckSelection = () => (
-    <div className="px-6 max-w-7xl mx-auto min-h-screen pb-40">
+    <div className="pt-8 px-6 max-w-7xl mx-auto min-h-screen pb-40">
       <StreamUIOverlay />
       <div className="text-center mb-20 relative z-10">
         <h2 className="font-cinzel text-4xl md:text-6xl text-white mb-6 tracking-[0.4em] uppercase">타로 덱 선택</h2>
@@ -1058,44 +1058,51 @@ const saveReadingResult = async (reading: ReadingResult) => {
   const renderChatSection = () => {
     if (!readingResult) return null;
     return (
-      <StreamFrame className="flex flex-col h-[500px] mt-12">
-        <div className="text-center mb-8">
-          <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
-        </div>
-        <div className="flex-1 overflow-y-auto mb-6 pr-4 space-y-6 no-scrollbar">
-          {chatMessages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] p-6 rounded-2xl ${msg.role === 'user' ? 'bg-[#c58e711a] border border-[#c58e714d] text-amber-50' : 'bg-slate-900/60 border border-white/5 text-slate-300'}`}>
-                <p className="text-lg font-playfair leading-relaxed">{msg.content}</p>
+      <div className="flex flex-col gap-8 mt-12">
+        {/* 질문 입력 영역 */}
+        <StreamFrame className="p-8">
+          <div className="text-center mb-6">
+            <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
+          </div>
+          <div className="relative">
+            <input 
+              type="text" 
+              value={userInput} 
+              onChange={(e) => setUserInput(e.target.value)} 
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
+              placeholder="더 궁금한 점을 물어보세요" 
+              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-xl px-8 py-5 text-white font-playfair text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-800"
+            />
+            <button 
+              onClick={() => handleSendMessage(false)} 
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-rose-gold hover:text-white transition-colors"
+            >
+              <Send className="w-6 h-6" />
+            </button>
+          </div>
+        </StreamFrame>
+
+        {/* 해석 표시 영역 */}
+        <StreamFrame className="flex flex-col h-[600px] p-8">
+          <div className="flex-1 overflow-y-auto pr-4 space-y-6 no-scrollbar">
+            {chatMessages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] p-6 rounded-2xl ${msg.role === 'user' ? 'bg-[#c58e711a] border border-[#c58e714d] text-amber-50' : 'bg-slate-900/60 border border-white/5 text-slate-300'}`}>
+                  <p className="font-playfair leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                </div>
               </div>
-            </div>
-          ))}
-          {isLoading && chatMessages.length > 0 && (
-            <div className="flex justify-start">
-              <div className="p-4 bg-slate-900/60 border border-white/5 rounded-full">
-                <RefreshCw className="w-5 h-5 rose-gold-text animate-spin" />
+            ))}
+            {isLoading && chatMessages.length > 0 && (
+              <div className="flex justify-start">
+                <div className="p-4 bg-slate-900/60 border border-white/5 rounded-full">
+                  <RefreshCw className="w-5 h-5 rose-gold-text animate-spin" />
+                </div>
               </div>
-            </div>
-          )}
-          <div ref={chatEndRef} />
-        </div>
-        <div className="relative">
-          <input 
-            type="text" 
-            value={userInput} 
-            onChange={(e) => setUserInput(e.target.value)} 
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
-            placeholder="더 궁금한 점을 물어보세요" 
-            className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-xl px-8 py-5 text-white font-playfair text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-800"
-          />
-          <button 
-            onClick={() => handleSendMessage(false)} 
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-rose-gold hover:text-white transition-colors"
-          >
-            <Send className="w-6 h-6" />
-          </button>
-        </div>
-      </StreamFrame>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+        </StreamFrame>
+      </div>
     );
   };
 
@@ -1207,7 +1214,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
                 resetReadingState();
                 setState(AppState.HOME);
               }}
-              className="absolute top-18 left-50 flex items-center gap-2 text-[#c58e71] hover:text-white transition-colors font-cinzel text-lg tracking-widest uppercase"
+              className="absolute top-6 left-6 flex items-center gap-2 text-[#c58e71] hover:text-white transition-colors font-cinzel text-lg tracking-widest uppercase"
             >
               <ChevronLeft className="w-6 h-6" />
               <span>홈으로 나가기</span>
@@ -1218,7 +1225,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
               <textarea 
                 value={question} 
                 onChange={(e) => setQuestion(e.target.value)} 
-                className="w-full bg-transparent border-none focus:ring-0 text-white font-playfair text-xl md:text-3xl leading-relaxed min-h-[280px] resize-none placeholder:text-slate-700" 
+                className="w-full bg-transparent border-none focus:ring-0 text-white font-playfair text-xl md:text-2xl leading-relaxed min-h-[320px] resize-none placeholder:text-slate-700" 
                 placeholder="당신의 질문은 무엇입니까?..." 
               />
             </StreamFrame>
@@ -1237,7 +1244,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
                   resetReadingState();
                   setState(AppState.HOME);
                 }}
-                className="absolute top-18 left-50 flex items-center gap-2 text-[#c58e71] hover:text-white transition-colors font-cinzel text-lg tracking-widest uppercase"
+                className="absolute left-6 top-4 flex items-center gap-2 text-[#c58e71] hover:text-white transition-colors font-cinzel text-lg tracking-widest uppercase"
               >
                 <ChevronLeft className="w-6 h-6" />
                 <span>홈으로 나가기</span>
