@@ -1060,8 +1060,8 @@ const saveReadingResult = async (reading: ReadingResult) => {
     return (
       <div className="flex flex-col gap-6 mt-12 w-full">
         {/* 질문 입력 영역 */}
-        <StreamFrame className="p-6 md:p-8">
-          <div className="text-center mb-4">
+        <StreamFrame className="p-6 md:p-10">
+          <div className="text-center mb-6">
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
           <div className="relative">
@@ -1071,11 +1071,11 @@ const saveReadingResult = async (reading: ReadingResult) => {
               onChange={(e) => setUserInput(e.target.value)} 
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
               placeholder="더 궁금한 점을 물어보세요" 
-              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-xl px-6 md:px-8 py-4 md:py-5 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-800"
+              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-xl px-8 md:px-12 py-5 md:py-6 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-800"
             />
             <button 
               onClick={() => handleSendMessage(false)} 
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-rose-gold hover:text-white transition-colors"
+              className="absolute right-6 top-1/2 -translate-y-1/2 p-2 text-rose-gold hover:text-white transition-colors"
             >
               <Send className="w-6 h-6" />
             </button>

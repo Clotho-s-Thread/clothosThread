@@ -104,7 +104,7 @@ const TarotResult = ({
   };
 
   return (
-    <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen pb-40">
+    <div className="pt-3 px-6 max-w-7xl mx-auto min-h-screen pb-40">
       <StreamUIOverlay />
 
       {isThreeCard ? (
