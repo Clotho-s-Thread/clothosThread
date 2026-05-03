@@ -1058,9 +1058,9 @@ const saveReadingResult = async (reading: ReadingResult) => {
   const renderChatSection = () => {
     if (!readingResult) return null;
     return (
-      <div className="flex flex-col gap-6 mt-12 w-full">
+      <div className="flex flex-col gap-6 mt-12 w-full max-w-5xl mx-auto">
         {/* 질문 입력 영역 */}
-        <StreamFrame className="p-6 md:p-10">
+        <StreamFrame className="p-6 md:p-10 w-full">
           <div className="text-center mb-6">
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
@@ -1071,7 +1071,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
               onChange={(e) => setUserInput(e.target.value)} 
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
               placeholder="더 궁금한 점을 물어보세요" 
-              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-xl px-8 md:px-12 py-5 md:py-6 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-800"
+              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-2xl px-8 md:px-12 py-5 md:py-6 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-800"
             />
             <button 
               onClick={() => handleSendMessage(false)} 
@@ -1083,18 +1083,18 @@ const saveReadingResult = async (reading: ReadingResult) => {
         </StreamFrame>
 
         {/* 해석 표시 영역 */}
-        <StreamFrame className="flex flex-col min-h-[700px] p-6 md:p-8">
-          <div className="flex-1 overflow-y-auto pr-4 space-y-6 no-scrollbar">
+        <StreamFrame className="flex flex-col min-h-[700px] p-8 md:p-10 w-full">
+          <div className="flex-1 overflow-y-auto pr-4 space-y-4 no-scrollbar">
             {chatMessages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[90%] p-4 md:p-6 rounded-2xl break-words ${msg.role === 'user' ? 'bg-[#c58e711a] border border-[#c58e714d] text-amber-50' : 'bg-slate-900/60 border border-white/5 text-slate-300'}`}>
-                  <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                <div className={`max-w-[80%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
+                  <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                 </div>
               </div>
             ))}
             {isLoading && chatMessages.length > 0 && (
               <div className="flex justify-start">
-                <div className="p-4 bg-slate-900/60 border border-white/5 rounded-full">
+                <div className="p-4 bg-slate-800/60 border border-slate-700 rounded-full">
                   <RefreshCw className="w-5 h-5 rose-gold-text animate-spin" />
                 </div>
               </div>
