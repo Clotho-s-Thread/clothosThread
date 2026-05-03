@@ -79,11 +79,6 @@ const HomeView: React.FC<HomeViewProps> = ({
             운명의 타로 시작하기
           </button>
         </div>
-        
-        <div className="absolute bottom-12 flex flex-col items-center animate-bounce opacity-40">
-           <span className="font-cinzel text-xs tracking-widest rose-gold-text mb-2 uppercase text-center px-4">아래로 스크롤하여 운명을 확인하세요</span>
-           <ChevronDown className="w-5 h-5 rose-gold-text" />
-        </div>
       </section>
 
       {/* --- 운명의 정렬 (스프레드 선택) --- */}

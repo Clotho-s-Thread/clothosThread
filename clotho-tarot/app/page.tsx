@@ -636,7 +636,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   );
 
   const renderDeckSelection = () => (
-    <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen pb-40">
+    <div className="px-6 max-w-7xl mx-auto min-h-screen pb-40">
       <StreamUIOverlay />
       <div className="text-center mb-20 relative z-10">
         <h2 className="font-cinzel text-4xl md:text-6xl text-white mb-6 tracking-[0.4em] uppercase">타로 덱 선택</h2>
