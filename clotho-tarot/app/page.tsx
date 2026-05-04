@@ -1004,11 +1004,11 @@ const saveReadingResult = async (reading: ReadingResult) => {
                     }
                   }}
                   placeholder="마스터에게 고민을 털어놓으세요..." 
-                  className="w-full bg-slate-900/60 border border-rose-gold/30 rounded-2xl px-12 md:px-16 py-6 md:py-7 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[60px] max-h-[150px] overflow-y-auto"
+                  className="w-full bg-slate-900/60 border border-rose-gold/30 rounded-2xl px-12 md:px-16 py-4 md:py-5 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[50px] max-h-[100px] overflow-y-auto"
                 />
                 <button 
                   onClick={() => handleSendMessage(true)} 
-                  className="absolute right-6 bottom-6 w-10 h-10 md:w-12 md:h-12 bg-rose-gold rounded-xl text-slate-950 hover:bg-white transition-colors flex items-center justify-center shadow-lg"
+                  className="absolute right-6 bottom-4 w-10 h-10 md:w-12 md:h-12 bg-rose-gold rounded-xl text-slate-950 hover:bg-white transition-colors flex items-center justify-center shadow-lg"
                 >
                   <Send className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
@@ -1042,42 +1042,17 @@ const saveReadingResult = async (reading: ReadingResult) => {
   const renderChatSection = () => {
     if (!readingResult) return null;
     return (
-      <div className="flex flex-col gap-0 mt-8 w-full max-w-full">
-        <StreamFrame className="flex flex-col min-h-[750px] p-8 md:p-10 w-full rounded-b-none">
-          <div className="text-center mb-8">
+      <div className="flex flex-col gap-0 mt-8 w-full max-w-full h-[700px]">
+        {/* 전체 컨테이너 */}
+        <StreamFrame className="flex flex-col w-full h-full rounded-b-none overflow-hidden">
+          {/* 상단: 제목 */}
+          <div className="text-center py-4 px-8 border-b border-[#c58e7133] flex-shrink-0">
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
 
-          <div className="relative mb-8 pb-6 border-b border-[#c58e7133] w-full">
-            <textarea 
-              value={userInput} 
-              onChange={(e) => setUserInput(e.target.value)} 
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage(false);
-                }
-              }}
-              placeholder="더 궁금한 점을 물어보세요" 
-              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-12 md:px-16 py-6 md:py-7 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[60px] max-h-[150px] overflow-y-auto"
-            />
-            <button 
-              onClick={() => handleSendMessage(false)} 
-              className="absolute right-8 bottom-6 p-3 text-rose-gold hover:text-white transition-colors"
-            >
-              <Send className="w-7 h-7" />
-            </button>
-          </div>
-
-          {/* ✅ [수정 3] chatMessages.slice(2): 최초 질문/해석(index 0,1)은 숨기고 후속 대화만 표시 */}
-          <div className="flex-1 overflow-y-auto pr-4 space-y-4 no-scrollbar">
-            {chatMessages.slice(2).map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
-                  <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
-                </div>
-              </div>
-            ))}
+          {/* 중간: 메시지 영역 (스크롤 가능, 역방향) */}
+          <div className="flex-1 overflow-y-auto pr-4 space-y-4 no-scrollbar p-8 md:p-10 flex flex-col-reverse">
+            <div ref={chatEndRef} />
             {isLoading && chatMessages.length > 2 && (
               <div className="flex justify-start">
                 <div className="p-4 bg-slate-800/60 border border-slate-700 rounded-full">
@@ -1085,7 +1060,37 @@ const saveReadingResult = async (reading: ReadingResult) => {
                 </div>
               </div>
             )}
-            <div ref={chatEndRef} />
+            {chatMessages.slice(2).map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
+                  <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 하단: 입력 영역 (고정) */}
+          <div className="flex-shrink-0 border-t border-[#c58e7133] p-4 md:p-6 bg-slate-950/40">
+            <div className="relative">
+              <textarea 
+                value={userInput} 
+                onChange={(e) => setUserInput(e.target.value)} 
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage(false);
+                  }
+                }}
+                placeholder="더 궁금한 점을 물어보세요" 
+                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-12 md:px-16 py-4 md:py-5 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[50px] max-h-[100px] overflow-y-auto"
+              />
+              <button 
+                onClick={() => handleSendMessage(false)} 
+                className="absolute right-8 bottom-4 p-3 text-rose-gold hover:text-white transition-colors"
+              >
+                <Send className="w-7 h-7" />
+              </button>
+            </div>
           </div>
         </StreamFrame>
       </div>
