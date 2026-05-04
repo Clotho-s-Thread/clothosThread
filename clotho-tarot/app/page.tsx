@@ -118,6 +118,13 @@ const App: React.FC = () => {
         const response = await fetch('/api/tarot');
         if (response.ok) {
           const data = await response.json();
+          console.log('📊 받아온 카드 데이터:', data);
+          console.log('📊 전체 카드 수:', data.length);
+          console.log('📊 메이저 카드 (0-21):', data.filter((c: any) => c.number < 100).length);
+          console.log('📊 마이너 카드 (100+):', data.filter((c: any) => c.number >= 100).length);
+          console.log('📊 첫 번째 카드:', data[0]);
+          console.log('📊 22번째 카드:', data[21]);
+          console.log('📊 23번째 카드:', data[22]);
           setDbCards(data);
         }
       } catch (error) {
@@ -441,6 +448,13 @@ const saveReadingResult = async (reading: ReadingResult) => {
     if (!selectedType) return;
     const maxCards = selectedType === ReadingType.YES_NO ? 1 : 3;
     const realNumber = dbCards[index]?.number ?? index;
+    
+    console.log('🃏 카드 선택:', {
+      배열인덱스: index,
+      카드번호: realNumber,
+      카드데이터: dbCards[index],
+      현재선택된카드: pickedIndices
+    });
 
     setPickedIndices(prev => {
       if (prev.find(p => p.index === realNumber)) {
@@ -1173,7 +1187,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
         setState(AppState.SHOP);
       }}
     >
-      <div className="relative">
+      <div className="relative w-full">
         {state === AppState.HOME && (
           <HomeView 
             selectedDeck={selectedDeck}
