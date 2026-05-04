@@ -1085,7 +1085,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
             <div ref={chatEndRef} />
           </div>
 
-          {/* 질문 입력 영역 - 하단으로 이동, 전체 가로 사용 */}
+          {/* 질문 입력 영역 - 하단으로 이동 */}
           <div className="relative pt-6 border-t border-[#c58e7133]">
             <input 
               type="text" 
