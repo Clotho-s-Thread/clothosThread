@@ -1127,7 +1127,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
                   }
                 }}
                 placeholder="더 궁금한 점을 물어보세요" 
-                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-6 md:px-8 py-3 md:py-3 text-white font-playfair text-sm md:text-base focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-16 resize-none min-h-[44px] max-h-[44px] overflow-y-auto"
+                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-6 md:px-8 py-3 md:py-3 text-white font-playfair text-sm md:text-base focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-16 resize-none min-h-[44px] max-h-[44px] overflow-hidden"
               />
               <button 
                 onClick={() => handleSendMessage(false)} 

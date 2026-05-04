@@ -141,7 +141,7 @@ const TarotResult = ({
   };
 
   return (
-    <div className="pt-3 px-6 max-w-7xl mx-auto min-h-screen pb-40">
+    <div className="pt-3 px-6 max-w-7xl mx-auto pb-40">
       <StreamUIOverlay />
 
       {isThreeCard ? (
@@ -154,7 +154,7 @@ const TarotResult = ({
           </div>
 
           <div className="flex flex-col gap-12 w-full max-w-4xl mx-auto">
-            <StreamFrame className="min-h-[300px]">
+            <StreamFrame className="min-h-[300px] max-h-[600px] overflow-y-auto">
               <div className="flex items-center gap-6 mb-12 border-b border-[#c58e7133] pb-6">
                 <Compass className="w-8 h-8 rose-gold-text" />
                 <h4 className="font-cinzel text-2xl md:text-3xl text-white tracking-[0.3em] uppercase">
@@ -197,7 +197,7 @@ const TarotResult = ({
 
             {/* 리딩 결과 영역 */}
             <div className="lg:col-span-2">
-              <StreamFrame className="min-h-[400px]">
+              <StreamFrame className="min-h-[400px] max-h-[600px] overflow-y-auto">
                 <div className="flex items-center gap-6 mb-12 border-b border-[#c58e7133] pb-6">
                   <Compass className="w-8 h-8 rose-gold-text" />
                   <h4 className="font-cinzel text-2xl md:text-3xl text-white tracking-[0.3em] uppercase">
