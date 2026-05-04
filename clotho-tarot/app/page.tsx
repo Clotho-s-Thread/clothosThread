@@ -1068,19 +1068,23 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
           {/* 질문 입력 영역 - 상단 고정 */}
           <div className="relative mb-8 pb-6 border-b border-[#c58e7133]">
-            <input 
-              type="text" 
+            <textarea 
               value={userInput} 
               onChange={(e) => setUserInput(e.target.value)} 
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(false);
+                }
+              }}
               placeholder="더 궁금한 점을 물어보세요" 
               className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-10 md:px-14 py-6 md:py-7 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[60px] max-h-[150px] overflow-y-auto"
             />
             <button 
               onClick={() => handleSendMessage(false)} 
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-rose-gold hover:text-white transition-colors"
+              className="absolute right-8 bottom-6 p-3 text-rose-gold hover:text-white transition-colors"
             >
-              <Send className="w-6 h-6" />
+              <Send className="w-7 h-7" />
             </button>
           </div>
 
