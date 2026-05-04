@@ -271,3 +271,26 @@ nav {
   position: relative;
   z-index: 3 !important;
 }
+
+.archive-messages::-webkit-scrollbar {
+  width: 6px;
+}
+ 
+.archive-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+ 
+.archive-messages::-webkit-scrollbar-thumb {
+  background: rgba(197, 142, 113, 0.5);
+  border-radius: 3px;
+}
+ 
+.archive-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(197, 142, 113, 0.8);
+}
+ 
+/* Firefox */
+.archive-messages {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(197, 142, 113, 0.5) transparent;
+}

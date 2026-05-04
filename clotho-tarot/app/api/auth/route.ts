@@ -59,11 +59,18 @@ export async function POST(req: Request) {
       }
       
       console.log("✅ 로그인 성공");
-      return new Response(JSON.stringify({ email: user.email, name: user.name }), { 
-        status: 200,
-        headers: { "Content-Type": "application/json" }
-      });
-    }
+    // ✅ id, point, profileImage 등 필요한 정보 모두 포함
+    return new Response(JSON.stringify({ 
+      id: user.id,
+      email: user.email, 
+      name: user.name,
+      point: user.point,
+      profileImage: user.image
+    }), { 
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
  
     return new Response(JSON.stringify({ error: "잘못된 요청 타입" }), { 
       status: 400,

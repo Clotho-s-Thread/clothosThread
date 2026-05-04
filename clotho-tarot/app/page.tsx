@@ -135,6 +135,15 @@ const App: React.FC = () => {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages]);
+
+  // ==========================================
+  // 📍 useEffect: RESULT 상태 진입 시 화면 위에서 시작
+  // ==========================================
+  useEffect(() => {
+    if (state === AppState.RESULT) {
+      window.scrollTo(0, 0);
+    }
+  }, [state]);
   
   // ==========================================
   // 🛠️ 유틸리티: 카드 슈트 판정
@@ -1051,7 +1060,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
           </div>
 
           {/* 중간: 메시지 영역 (스크롤 가능, 아래쪽부터 시작) */}
-          <div className="flex-1 overflow-y-auto pr-4 space-y-4 no-scrollbar p-8 md:p-10 flex flex-col justify-end">
+          <div className="flex-1 overflow-y-auto space-y-4 p-8 md:p-10 flex flex-col justify-end archive-messages" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(197, 142, 113, 0.5) transparent' }}>
             {chatMessages.slice(2).map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
