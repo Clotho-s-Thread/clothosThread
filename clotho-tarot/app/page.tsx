@@ -141,6 +141,9 @@ const App: React.FC = () => {
   // ==========================================
   useEffect(() => {
     if (state === AppState.RESULT) {
+      // 스크롤 동작 제거
+      document.documentElement.style.scrollBehavior = 'auto';
+      
       // 즉시 스크롤
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
@@ -157,7 +160,19 @@ const App: React.FC = () => {
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
+      }, 50);
+      
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
       }, 100);
+      
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 150);
     }
   }, [state]);
   
@@ -533,9 +548,12 @@ const saveReadingResult = async (reading: ReadingResult) => {
       ]);
     } finally {
       setIsLoading(false);
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      // RESULT 상태일 때는 스크롤하지 않음 (아카이브에서만 스크롤)
+      if (state !== AppState.RESULT) {
+        setTimeout(() => {
+          chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
     }
   };
 
@@ -1095,7 +1113,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
           </div>
 
           {/* 하단: 입력 영역 (고정) */}
-          <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-10 py-3 md:py-4 w-full">
+          <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-12 py-3 md:py-3 w-full">
             <div className="relative w-full">
               <textarea 
                 value={userInput} 
@@ -1107,7 +1125,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
                   }
                 }}
                 placeholder="더 궁금한 점을 물어보세요" 
-                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-6 md:px-8 py-2 md:py-2 text-white font-playfair text-sm md:text-base focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-16 resize-none min-h-[36px] max-h-[70px] overflow-y-auto"
+                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-6 md:px-8 py-3 md:py-3 text-white font-playfair text-sm md:text-base focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-16 resize-none min-h-[44px] max-h-[44px] overflow-y-auto"
               />
               <button 
                 onClick={() => handleSendMessage(false)} 

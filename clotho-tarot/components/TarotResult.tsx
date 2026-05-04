@@ -23,25 +23,40 @@ const TarotResult = ({
   
   // 📍 컴포넌트 마운트 시 화면 위에서부터 시작
   useEffect(() => {
-    // 즉시 스크롤
+    // 스크롤 금지
+    document.documentElement.style.scrollBehavior = 'auto';
+    document.body.style.overflow = 'hidden';
+    
+    // 즉시 스크롤 (최상단)
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
     
-    // 약간의 지연 후 다시 스크롤 (React 렌더링 완료 대기)
+    // setTimeout으로 렌더링 후 다시 스크롤
     setTimeout(() => {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     }, 0);
     
-    // 추가 지연 (일부 페이지에서 필요)
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 50);
+    
     setTimeout(() => {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     }, 100);
-  }, [readingResult]);
+    
+    // cleanup: 컴포넌트 언마운트 시 스크롤 복원
+    return () => {
+      document.body.style.overflow = 'auto';
+      document.documentElement.style.scrollBehavior = 'smooth';
+    };
+  }, []);
   
   // 로딩 중일 때 - 화면 가운데 표시
   if (isLoading && !readingResult?.interpretation) {
