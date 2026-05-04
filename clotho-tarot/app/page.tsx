@@ -120,20 +120,13 @@ const App: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           
-          // 🔧 서버에서 이제 1~78로 반환 (메이저 1~22, 완드 23~36, 컵 37~50, 소드 51~64, 펜타클 65~78)
-          // 정확히 78장만 필터링
-          const validCards = data.filter((card: any, index: number) => {
+          // 서버에서 1~78로 반환 (메이저 1~22, 완드 23~36, 컵 37~50, 소드 51~64, 펜타클 65~78)
+          const validCards = data.filter((card: any) => {
             const num = card.number;
-            // 1~78 범위만 유효
             return num >= 1 && num <= 78;
-          }).slice(0, 78); // 혹시 모르니 정확히 78장만
-          
-          console.log('📊 원본 카드 수:', data.length);
-          console.log('📊 필터링 후 카드 수:', validCards.length);
-          console.log('📊 카드 번호 (1~78):', validCards.map((c: any) => c.number));
+          }).slice(0, 78);
           
           setDbCards(validCards);
-          console.log('📊 카드 데이터 로드 완료:', validCards.length, '장');
         }
       } catch (error) {
         console.error('DB 카드 로딩 에러:', error);
@@ -442,7 +435,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     }
   };
 
-  // ==========================================
   // 🎴 카드 섞기 (Fisher-Yates 알고리즘)
   // ==========================================
   const getShuffledCards = () => {
@@ -458,10 +450,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
   useEffect(() => {
     if (state === AppState.CARD_PICKING && dbCards.length > 0) {
       const shuffled = getShuffledCards();
-      console.log('🎴 카드 섞음 시작');
-      console.log('🎴 dbCards 길이:', dbCards.length);
-      console.log('🎴 shuffled 길이:', shuffled.length);
-      console.log('🎴 shuffled 카드 번호들:', shuffled.map(c => c.number));
       setShuffledCards(shuffled);
     }
   }, [state, dbCards]);
@@ -484,13 +472,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     const cardsToUse = shuffledCards.length > 0 ? shuffledCards : dbCards;
     const realNumber = cardsToUse[index]?.number ?? index;
     
-    console.log('🃏 카드 선택:', {
-      배열인덱스: index,
-      카드번호: realNumber,
-      카드데이터: cardsToUse[index],
-      현재선택된카드: pickedIndices
-    });
-
     setPickedIndices(prev => {
       if (prev.find(p => p.index === realNumber)) {
         return prev.filter(p => p.index !== realNumber);
@@ -1361,12 +1342,11 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
               <div 
                 ref={scrollContainerRef}
-                className="flex overflow-x-auto no-scrollbar py-0 px-4 gap-3 cursor-grab active:cursor-grabbing w-full h-full items-center justify-center"
+                className="flex overflow-x-auto no-scrollbar py-0 px-4 gap-3 cursor-grab active:cursor-grabbing w-full h-full items-center justify-start"
                 style={{ scrollSnapType: 'x proximity' }}
               >
                 {(() => {
                   const cardsToRender = shuffledCards.length > 0 ? shuffledCards : dbCards;
-                  console.log('📊 렌더링할 카드 수:', cardsToRender.length);
                   return cardsToRender.map((card, idx) => {
                     const realNumber = card?.number ?? idx;
                     const cardData = card;
