@@ -131,10 +131,11 @@ const App: React.FC = () => {
   // 📍 useEffect: 채팅 메시지 스크롤
   // ==========================================
   useEffect(() => {
-    if (chatMessages.length > 0 && chatEndRef.current) {
+    // RESULT 상태일 때는 자동 스크롤하지 않음
+    if (state !== AppState.RESULT && chatMessages.length > 0 && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [chatMessages]);
+  }, [chatMessages, state]);
 
   // ==========================================
   // 📍 useEffect: RESULT 상태 진입 시 화면 위에서 시작
@@ -1109,7 +1110,8 @@ const saveReadingResult = async (reading: ReadingResult) => {
                 </div>
               </div>
             )}
-            <div ref={chatEndRef} />
+            {/* ✅ chatEndRef - 스크롤 움직임 최소화 */}
+            <div ref={chatEndRef} style={{ pointerEvents: 'none' }} />
           </div>
 
           {/* 하단: 입력 영역 (고정) */}
