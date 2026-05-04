@@ -14,7 +14,35 @@ import Shop from '../components/Shop';
 import PointPurchase from '../components/PointPurchase';
 import Checkout from '../components/Checkout';
 import SubscriptionPurchase from '../components/SubscriptionPurchase';
-import { Moon, Sparkles, RefreshCw, ArrowRight, Star, Compass, Sun, Eye, ChevronDown, Send, Hexagon, ChevronLeft, ChevronRight, User as UserIcon, MessageCircle, UserPlus, Info, Lock } from 'lucide-react';
+import { Moon, Sparkles, RefreshCw, ArrowRight, Star, Compass, Sun, Eye, ChevronDown, Send, Hexagon, ChevronLeft, ChevronRight, User as UserIcon, MessageCircle, UserPlus, Info, Lock, AlertTriangle } from 'lucide-react';
+
+// ==========================================
+// 📌 오프라인 모드: 테스트용 해석 템플릿
+// ==========================================
+
+const OFFLINE_INTERPRETATION_TEMPLATES = {
+  'three-card': (cards: any[], question: string) => {
+    const templates = [
+      `**${cards[0]?.nameKo || '카드1'}** (과거)\n이 카드는 당신의 배경을 나타냅니다. ${cards[0]?.name}의 에너지가 지금의 상황을 만들었습니다.\n\n**${cards[1]?.nameKo || '카드2'}** (현재)\n현재 당신은 ${cards[1]?.name}의 영향 아래에 있습니다. 이것이 지금의 상황입니다.\n\n**${cards[2]?.nameKo || '카드3'}** (미래)\n이 흐름은 ${cards[2]?.name}로 발전하려 합니다. 당신의 선택이 중요합니다.`,
+      
+      `**${cards[0]?.nameKo || '카드1'}** - 과거의 영향\n${cards[0]?.name}는 당신에게 중요한 깨달음을 가져다주었습니다.\n\n**${cards[1]?.nameKo || '카드2'}** - 현재의 상황\n지금 당신은 ${cards[1]?.name}의 에너지 속에서 결정의 순간을 맞이하고 있습니다.\n\n**${cards[2]?.nameKo || '카드3'}** - 미래의 가능성\n${cards[2]?.name}이 당신을 기다리고 있습니다. 당신의 행동이 이를 결정합니다.`,
+      
+      `과거: ${cards[0]?.nameKo || '카드1'}\n현재: ${cards[1]?.nameKo || '카드2'}\n미래: ${cards[2]?.nameKo || '카드3'}\n\n이 세 카드의 조합은 당신의 여정이 의미 있는 변화로 향하고 있음을 보여줍니다. "${question}"에 대한 답은 당신 안에 이미 있습니다.`
+    ];
+    return templates[Math.floor(Math.random() * templates.length)];
+  },
+  
+  'one-card': (cards: any[], question: string) => {
+    const templates = [
+      `**${cards[0]?.nameKo || '카드'}**\n\n당신의 질문에 ${cards[0]?.name}이(가) 나타났습니다.\n\n이 카드는 당신이 지금 필요한 에너지를 나타냅니다. 이 카드의 의미를 깊이 있게 받아들여보세요.`,
+      
+      `**${cards[0]?.nameKo || '카드'}**\n\n이 카드가 당신에게 전하는 메시지:\n"${cards[0]?.name}의 길을 따르세요. 당신의 직관이 맞습니다."`,
+      
+      `질문: "${question}"\n답: **${cards[0]?.nameKo || '카드'}**\n\n${cards[0]?.name}는 당신의 상황에서 가장 중요한 요소입니다. 이에 집중하세요.`
+    ];
+    return templates[Math.floor(Math.random() * templates.length)];
+  }
+};
 
 // ==========================================
 // 📌 카드 뒷면 디자인 데이터
@@ -76,10 +104,14 @@ const App: React.FC = () => {
   const [deckTab, setDeckTab] = useState<'front' | 'back'>('front');
   const [selectedCardDetail, setSelectedCardDetail] = useState<any>(null);
 
+  // ✅ 오프라인 모드 상태 추가
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
   const TOTAL_DECK_SIZE = 78;
 
   // ==========================================
-  // 📍 리딩 상태 초기화 함수 (방법 2)
+  // 📍 리딩 상태 초기화 함수
   // ==========================================
   const resetReadingState = () => {
     setSelectedType(null);
@@ -88,7 +120,6 @@ const App: React.FC = () => {
     setReadingResult(null);
     setChatMessages([]);
     setUserInput('');
-    // ✅ 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
     console.log('✅ 리딩 상태 초기화됨');
   };
@@ -111,7 +142,7 @@ const App: React.FC = () => {
   }, []);
 
   // ==========================================
-  // 📍 useEffect: DB에서 타로 카드 로드
+  // 📍 useEffect: DB에서 타로 카드 로드 (API 에러 처리 추가)
   // ==========================================
   useEffect(() => {
     const fetchCards = async () => {
@@ -127,9 +158,15 @@ const App: React.FC = () => {
           }).slice(0, 78);
           
           setDbCards(validCards);
+          setApiError(null); // API 성공 시 에러 해제
+          setIsOfflineMode(false);
         }
       } catch (error) {
-        console.error('DB 카드 로딩 에러:', error);
+        console.error('❌ DB 카드 로딩 에러:', error);
+        // ✅ API 실패 시 오프라인 모드 자동 활성화
+        setIsOfflineMode(true);
+        setApiError('서버 연결 실패: 오프라인 모드로 전환되었습니다');
+        console.log('📴 오프라인 모드 자동 활성화');
       }
     };
     fetchCards();
@@ -139,7 +176,6 @@ const App: React.FC = () => {
   // 📍 useEffect: 채팅 메시지 스크롤
   // ==========================================
   useEffect(() => {
-    // RESULT 상태일 때는 자동 스크롤하지 않음
     if (state !== AppState.RESULT && chatMessages.length > 0 && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -150,15 +186,12 @@ const App: React.FC = () => {
   // ==========================================
   useEffect(() => {
     if (state === AppState.RESULT) {
-      // 스크롤 동작 제거
       document.documentElement.style.scrollBehavior = 'auto';
       
-      // 즉시 스크롤
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
       
-      // 지연 후 재시도
       setTimeout(() => {
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
@@ -187,7 +220,6 @@ const App: React.FC = () => {
   
   // ==========================================
   // 🛠️ 유틸리티: 카드 슈트 판정
-  // 새로운 형식: 메이저 1~22, 완드 23~36, 컵 37~50, 소드 51~64, 펜타클 65~78
   // ==========================================
   const getCardSuit = (num: number) => {
     if (num >= 1 && num <= 22) return 'Major';
@@ -195,7 +227,7 @@ const App: React.FC = () => {
     if (num >= 37 && num <= 50) return 'Cups';
     if (num >= 51 && num <= 64) return 'Swords';
     if (num >= 65 && num <= 78) return 'Pentacles';
-    return 'Major'; // 기본값
+    return 'Major';
   };
 
   // ==========================================
@@ -338,7 +370,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   };
 
   // ==========================================
-  // 🎯 타로 읽기 최종 실행
+  // 🎯 타로 읽기 최종 실행 (API 에러 처리 추가)
   // ==========================================
   const finalizeSelection = async () => {
     console.log("🚀 [finalizeSelection] 함수 시작");
@@ -365,47 +397,89 @@ const saveReadingResult = async (reading: ReadingResult) => {
     setState(AppState.RESULT);
 
     try {
-      const requestData = {
-        messages: [{ 
-          role: 'user', 
-          content: question.trim() 
-        }],
-        selectedCards: pickedIndices
-      };
+      // ✅ API 사용 가능한지 확인
+      let interpretation: string;
 
-      const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify(requestData)
-      });
+      if (isOfflineMode) {
+        // 📴 오프라인 모드: 로컬 템플릿 사용
+        console.log('📴 오프라인 모드: 로컬 템플릿으로 해석 생성');
+        
+        const selectedCards = pickedIndices.map(({index}) => {
+          return dbCards.find((card: any) => card.number === index);
+        });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (parseError) {
-        console.error("❌ JSON 파싱 실패:", parseError);
-        alert("API 응답을 파싱할 수 없습니다");
-        return;
-      }
+        const templateKey = selectedType === ReadingType.YES_NO ? 'one-card' : 'three-card';
+        const interpretationFn = OFFLINE_INTERPRETATION_TEMPLATES[templateKey as keyof typeof OFFLINE_INTERPRETATION_TEMPLATES];
+        
+        interpretation = interpretationFn ? interpretationFn(selectedCards, question) : '카드의 메시지를 해석할 수 없습니다.';
+      } else {
+        // 🌐 온라인 모드: API 호출 시도
+        console.log('🌐 온라인 모드: API 호출 시도');
+        
+        const requestData = {
+          messages: [{ 
+            role: 'user', 
+            content: question.trim() 
+          }],
+          selectedCards: pickedIndices
+        };
 
-      if (!res.ok) {
-        alert(`타로 읽기 실패: ${data.error || '알 수 없는 오류'}`);
-        setState(AppState.QUESTION_INPUT);
-        return;
-      }
+        try {
+          const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(requestData)
+          });
 
-      if (!data.text || !data.cards || data.cards.length === 0) {
-        alert("API 응답이 불완전합니다");
-        return;
+          let data;
+          try {
+            data = await res.json();
+          } catch (parseError) {
+            console.error("❌ JSON 파싱 실패:", parseError);
+            throw new Error("API 응답을 파싱할 수 없습니다");
+          }
+
+          if (!res.ok) {
+            throw new Error(`API 호출 실패: ${data.error || res.status}`);
+          }
+
+          if (!data.text || !data.cards || data.cards.length === 0) {
+            throw new Error("API 응답이 불완전합니다");
+          }
+
+          interpretation = data.text;
+        } catch (apiErr) {
+          // ✅ API 실패 시 자동으로 오프라인 모드로 전환
+          console.error("❌ API 호출 실패:", apiErr);
+          console.log('📴 API 실패: 오프라인 모드로 자동 전환');
+          
+          setIsOfflineMode(true);
+          setApiError(`API 연결 실패: ${apiErr instanceof Error ? apiErr.message : '알 수 없는 오류'}`);
+          
+          // 오프라인 모드로 다시 실행
+          const selectedCards = pickedIndices.map(({index}) => {
+            return dbCards.find((card: any) => card.number === index);
+          });
+
+          const templateKey = selectedType === ReadingType.YES_NO ? 'one-card' : 'three-card';
+          const interpretationFn = OFFLINE_INTERPRETATION_TEMPLATES[templateKey as keyof typeof OFFLINE_INTERPRETATION_TEMPLATES];
+          interpretation = interpretationFn ? interpretationFn(selectedCards, question) : '카드의 메시지를 해석할 수 없습니다.';
+        }
       }
 
       const reading: ReadingResult = {
         question,
         type: selectedType,
-        cards: data.cards,
-        interpretation: data.text
+        cards: pickedIndices.map(({index, isReversed}) => {
+          const card = dbCards.find((c: any) => c.number === index);
+          return {
+            ...card,
+            isReversed
+          };
+        }),
+        interpretation
       };
 
       if (user) {
@@ -417,11 +491,9 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
       setReadingResult(reading);
 
-      // ✅ [수정 1] 최초 해석 결과를 채팅 히스토리 첫 항목으로 저장
-      // 후속 질문 시 서버가 이 히스토리를 컨텍스트로 활용함
       setChatMessages([
         { role: 'user', content: question.trim() },
-        { role: 'assistant', content: data.text }
+        { role: 'assistant', content: interpretation }
       ]);
 
       console.log("✅ [finalizeSelection] 완료");
@@ -526,9 +598,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   };
 
   // ==========================================
-  // 🎯 [수정 2] 후속 질문 전송 함수
-  // - 최초 해석 히스토리를 포함해서 서버에 전송
-  // - 스트리밍 제거 (서버가 JSON으로 응답하므로)
+  // 🎯 후속 질문 전송 함수 (API 에러 처리 추가)
   // ==========================================
   const handleSendMessage = async (isConsultationMode: boolean = false) => {
     if (!userInput.trim() || isLoading) return;
@@ -536,8 +606,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     const userContent = userInput.trim();
     const newMsg: ChatMessage = { role: 'user', content: userContent };
 
-    // chatMessages에는 이미 최초 해석 히스토리가 담겨있음:
-    // [{ role: 'user', content: 최초질문 }, { role: 'assistant', content: 최초해석 }, ...]
     const updatedMessages = [...chatMessages, newMsg];
     setChatMessages(updatedMessages);
     setUserInput('');
@@ -547,36 +615,50 @@ const saveReadingResult = async (reading: ReadingResult) => {
     console.log(`📤 [handleSendMessage] 후속 질문 여부: ${updatedMessages.length >= 2 ? '✅ 후속' : '🆕 최초'}`);
 
     try {
-      const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // ✅ 최초 해석 히스토리 + 새 질문 전체 전송
-          messages: updatedMessages.map(m => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            content: m.content
-          })),
-          // ✅ 뽑은 카드 정보도 항상 함께 전송
-          selectedCards: pickedIndices
-        })
-      });
+      if (isOfflineMode) {
+        // 📴 오프라인 모드: 미리 정의된 응답
+        const responses = [
+          `"${userContent}"에 대한 당신의 생각은 맞습니다. 당신의 직관을 믿으세요.`,
+          `그 질문은 깊은 성찰을 요구합니다. 지난 카드들을 다시 살펴보세요.`,
+          `이것은 당신이 이미 알고 있던 답입니다. 당신 안의 목소리를 들어보세요.`,
+          `흥미로운 질문입니다. 지난 카드들은 모두 이 답을 담고 있습니다.`
+        ];
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        setChatMessages(prev => [...prev, { role: 'assistant', content: randomResponse }]);
+      } else {
+        // 🌐 온라인 모드: API 호출 시도
+        try {
+          const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messages: updatedMessages.map(m => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                content: m.content
+              })),
+              selectedCards: pickedIndices
+            })
+          });
 
-      if (!res.ok) {
-        throw new Error(`서버 에러: ${res.status}`);
+          if (!res.ok) {
+            throw new Error(`서버 에러: ${res.status}`);
+          }
+
+          const data = await res.json();
+          const aiText = data.text || '응답을 받지 못했습니다.';
+
+          setChatMessages(prev => [...prev, { role: 'assistant', content: aiText }]);
+
+        } catch (error) {
+          console.error('❌ 채팅 전송 에러:', error);
+          // ✅ API 실패 시 오프라인 모드로 전환
+          setIsOfflineMode(true);
+          setApiError(`API 연결 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+          
+          const fallbackResponse = `죄송합니다. 서버 연결이 끊어졌습니다. 오프라인 모드로 전환되었습니다. "${userContent}"에 대해서는 카드의 지혜를 다시 살펴보세요.`;
+          setChatMessages(prev => [...prev, { role: 'assistant', content: fallbackResponse }]);
+        }
       }
-
-      const data = await res.json();
-      const aiText = data.text || '응답을 받지 못했습니다.';
-
-      // ✅ AI 응답도 히스토리에 추가 (다음 질문 시 컨텍스트로 활용)
-      setChatMessages(prev => [...prev, { role: 'assistant', content: aiText }]);
-
-    } catch (error) {
-      console.error('❌ 채팅 전송 에러:', error);
-      setChatMessages(prev => [
-        ...prev,
-        { role: 'assistant', content: '요청 처리 중 오류가 발생했습니다.' }
-      ]);
     } finally {
       setIsLoading(false);
       // RESULT 상태일 때는 스크롤하지 않음 (아카이브에서만 스크롤)
@@ -588,7 +670,21 @@ const saveReadingResult = async (reading: ReadingResult) => {
     }
   };
 
-  // 렌더링 함수들...
+  // ==========================================
+  // 🎯 API 에러 배너
+  // ==========================================
+  const ApiErrorBanner = () => {
+    if (!apiError) return null;
+    return (
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-amber-900/80 border border-amber-600 text-amber-100 px-6 py-3 rounded-lg flex items-center gap-3 backdrop-blur-sm max-w-md">
+        <AlertTriangle className="w-4 h-4 flex-shrink-0 animate-pulse" />
+        <span className="font-cinzel text-xs md:text-sm tracking-widest">{apiError}</span>
+        <button onClick={() => setApiError(null)} className="ml-auto text-amber-300 hover:text-white">✕</button>
+      </div>
+    );
+  };
+
+  // 렌더링 함수들... (기존 코드와 동일)
   const renderArcanaView = (type: 'Major' | 'Minor') => (
     <div className="pt-8 px-6 max-w-7xl mx-auto min-h-screen pb-40">
       <StreamUIOverlay />
@@ -1117,14 +1213,11 @@ const saveReadingResult = async (reading: ReadingResult) => {
     if (!readingResult) return null;
     return (
       <div className="flex flex-col gap-0 mt-8 w-full max-w-full h-[700px]">
-        {/* 전체 컨테이너 */}
         <StreamFrame className="flex flex-col w-full h-full rounded-b-none overflow-hidden">
-          {/* 상단: 제목 */}
           <div className="text-center py-4 px-8 border-b border-[#c58e7133] flex-shrink-0">
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
 
-          {/* 중간: 메시지 영역 (스크롤 가능, 아래쪽부터 시작) */}
           <div className="flex-1 overflow-y-auto space-y-4 pr-2 pl-8 md:pl-10 pt-8 md:pt-10 pb-8 md:pb-10 flex flex-col justify-end archive-messages" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(197, 142, 113, 0.6) rgba(197, 142, 113, 0.1)' }}>
             {chatMessages.slice(2).map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -1140,11 +1233,9 @@ const saveReadingResult = async (reading: ReadingResult) => {
                 </div>
               </div>
             )}
-            {/* ✅ chatEndRef - 스크롤 움직임 최소화 */}
             <div ref={chatEndRef} style={{ pointerEvents: 'none' }} />
           </div>
 
-          {/* 하단: 입력 영역 (고정) */}
           <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-12 py-3 md:py-3 w-full">
             <div className="relative w-full">
               <textarea 
@@ -1203,6 +1294,8 @@ const saveReadingResult = async (reading: ReadingResult) => {
         setState(AppState.SHOP);
       }}
     >
+      <ApiErrorBanner />
+
       <div className="relative w-full">
         {state === AppState.HOME && (
           <HomeView 

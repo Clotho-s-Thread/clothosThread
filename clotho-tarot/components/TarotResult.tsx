@@ -23,40 +23,25 @@ const TarotResult = ({
   
   // 📍 컴포넌트 마운트 시 화면 위에서부터 시작
   useEffect(() => {
-    // 스크롤 금지
-    document.documentElement.style.scrollBehavior = 'auto';
-    document.body.style.overflow = 'hidden';
+      // 스크롤 부드럽게 이동하는 속성 잠시 해제 (즉시 이동을 위함)
+      document.documentElement.style.scrollBehavior = 'auto';
     
-    // 즉시 스크롤 (최상단)
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    
-    // setTimeout으로 렌더링 후 다시 스크롤
-    setTimeout(() => {
+      // 즉시 스크롤 (최상단)
       window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 0);
     
-    setTimeout(() => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 50);
+      // 혹시 모를 렌더링 딜레이를 위한 추가 스크롤 처리
+      const scrollTimeout1 = setTimeout(() => window.scrollTo(0, 0), 0);
+      const scrollTimeout2 = setTimeout(() => window.scrollTo(0, 0), 50);
+      const scrollTimeout3 = setTimeout(() => window.scrollTo(0, 0), 100);
     
-    setTimeout(() => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 100);
-    
-    // cleanup: 컴포넌트 언마운트 시 스크롤 복원
-    return () => {
-      document.body.style.overflow = 'auto';
-      document.documentElement.style.scrollBehavior = 'smooth';
-    };
-  }, []);
+      // cleanup: 컴포넌트 언마운트 시 스크롤 동작 원래대로 복원
+      return () => {
+        document.documentElement.style.scrollBehavior = 'smooth';
+        clearTimeout(scrollTimeout1);
+        clearTimeout(scrollTimeout2);
+        clearTimeout(scrollTimeout3);
+      };
+    }, []);
   
   // 로딩 중일 때 - 화면 가운데 표시
   if (isLoading && !readingResult?.interpretation) {
@@ -154,7 +139,8 @@ const TarotResult = ({
           </div>
 
           <div className="flex flex-col gap-12 w-full max-w-4xl mx-auto">
-            <StreamFrame className="min-h-[300px] max-h-[600px] overflow-y-auto">
+            {/* 운명의 판결 - 스크롤 없음 */}
+            <StreamFrame>
               <div className="flex items-center gap-6 mb-12 border-b border-[#c58e7133] pb-6">
                 <Compass className="w-8 h-8 rose-gold-text" />
                 <h4 className="font-cinzel text-2xl md:text-3xl text-white tracking-[0.3em] uppercase">
@@ -174,7 +160,10 @@ const TarotResult = ({
                 </div>
               )}
             </StreamFrame>
+            
+            {/* 아카이브 질문하기 - 고정 높이 */}
             {renderChatSection && renderChatSection()}
+            
             <button
               onClick={resetReading}
               className="btn-celestial self-center font-bold px-12 py-4 mt-8"
@@ -195,9 +184,9 @@ const TarotResult = ({
               ))}
             </div>
 
-            {/* 리딩 결과 영역 */}
+            {/* 리딩 결과 영역 - 스크롤 없음 */}
             <div className="lg:col-span-2">
-              <StreamFrame className="min-h-[400px] max-h-[600px] overflow-y-auto">
+              <StreamFrame>
                 <div className="flex items-center gap-6 mb-12 border-b border-[#c58e7133] pb-6">
                   <Compass className="w-8 h-8 rose-gold-text" />
                   <h4 className="font-cinzel text-2xl md:text-3xl text-white tracking-[0.3em] uppercase">
@@ -220,7 +209,7 @@ const TarotResult = ({
             </div>
           </div>
 
-          {/* 아카이브 질문하기 - 아래 전체 너비 */}
+          {/* 아카이브 질문하기 - 스크롤 포함 */}
           {renderChatSection && renderChatSection()}
 
           {/* 새로운 탐색 시작 버튼 - 아카이브 아래 */}
