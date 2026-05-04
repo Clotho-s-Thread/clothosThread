@@ -367,7 +367,14 @@ const saveReadingResult = async (reading: ReadingResult) => {
       }
 
       setReadingResult(reading);
-      setChatMessages([]);
+
+      // ✅ [수정 1] 최초 해석 결과를 채팅 히스토리 첫 항목으로 저장
+      // 후속 질문 시 서버가 이 히스토리를 컨텍스트로 활용함
+      setChatMessages([
+        { role: 'user', content: question.trim() },
+        { role: 'assistant', content: data.text }
+      ]);
+
       console.log("✅ [finalizeSelection] 완료");
 
     } catch (error) {
@@ -447,78 +454,52 @@ const saveReadingResult = async (reading: ReadingResult) => {
     }
   };
 
+  // ==========================================
+  // 🎯 [수정 2] 후속 질문 전송 함수
+  // - 최초 해석 히스토리를 포함해서 서버에 전송
+  // - 스트리밍 제거 (서버가 JSON으로 응답하므로)
+  // ==========================================
   const handleSendMessage = async (isConsultationMode: boolean = false) => {
     if (!userInput.trim() || isLoading) return;
 
     const userContent = userInput.trim();
     const newMsg: ChatMessage = { role: 'user', content: userContent };
 
+    // chatMessages에는 이미 최초 해석 히스토리가 담겨있음:
+    // [{ role: 'user', content: 최초질문 }, { role: 'assistant', content: 최초해석 }, ...]
     const updatedMessages = [...chatMessages, newMsg];
     setChatMessages(updatedMessages);
     setUserInput('');
     setIsLoading(true);
+
+    console.log(`📤 [handleSendMessage] 전송 messages 수: ${updatedMessages.length}개`);
+    console.log(`📤 [handleSendMessage] 후속 질문 여부: ${updatedMessages.length >= 2 ? '✅ 후속' : '🆕 최초'}`);
 
     try {
       const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          // ✅ 최초 해석 히스토리 + 새 질문 전체 전송
           messages: updatedMessages.map(m => ({
             role: m.role === 'assistant' ? 'model' : 'user',
             content: m.content
           })),
+          // ✅ 뽑은 카드 정보도 항상 함께 전송
           selectedCards: pickedIndices
         })
       });
 
-      const reader = res.body?.getReader();
-      if (!reader) {
-        throw new Error('응답 스트림을 읽을 수 없습니다');
+      if (!res.ok) {
+        throw new Error(`서버 에러: ${res.status}`);
       }
 
-      const decoder = new TextDecoder('utf-8');
-      let aiText = '';
-      let assistantMsgAdded = false;
+      const data = await res.json();
+      const aiText = data.text || '응답을 받지 못했습니다.';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // ✅ AI 응답도 히스토리에 추가 (다음 질문 시 컨텍스트로 활용)
+      setChatMessages(prev => [...prev, { role: 'assistant', content: aiText }]);
 
-        const chunk = decoder.decode(value, { stream: true });
-        aiText += chunk;
-
-        if (!assistantMsgAdded) {
-          setChatMessages(prev => [
-            ...prev,
-            { role: 'assistant', content: aiText }
-          ]);
-          assistantMsgAdded = true;
-        } else {
-          setChatMessages(prev => {
-            const updated = [...prev];
-            const lastMsg = updated[updated.length - 1];
-            if (lastMsg.role === 'assistant') {
-              updated[updated.length - 1] = {
-                ...lastMsg,
-                content: aiText
-              };
-            }
-            return updated;
-          });
-        }
-      }
-
-      setChatMessages(prev => {
-        const updated = [...prev];
-        const lastMsg = updated[updated.length - 1];
-        if (lastMsg.role === 'assistant') {
-          updated[updated.length - 1] = {
-            ...lastMsg,
-            content: aiText
-          };
-        }
-        return updated;
-      });
     } catch (error) {
       console.error('❌ 채팅 전송 에러:', error);
       setChatMessages(prev => [
@@ -527,7 +508,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
       ]);
     } finally {
       setIsLoading(false);
-
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -1089,15 +1069,16 @@ const saveReadingResult = async (reading: ReadingResult) => {
             </button>
           </div>
 
+          {/* ✅ [수정 3] chatMessages.slice(2): 최초 질문/해석(index 0,1)은 숨기고 후속 대화만 표시 */}
           <div className="flex-1 overflow-y-auto pr-4 space-y-4 no-scrollbar">
-            {chatMessages.map((msg, i) => (
+            {chatMessages.slice(2).map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
                   <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                 </div>
               </div>
             ))}
-            {isLoading && chatMessages.length > 0 && (
+            {isLoading && chatMessages.length > 2 && (
               <div className="flex justify-start">
                 <div className="p-4 bg-slate-800/60 border border-slate-700 rounded-full">
                   <RefreshCw className="w-5 h-5 rose-gold-text animate-spin" />
