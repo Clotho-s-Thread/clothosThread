@@ -197,7 +197,7 @@ const TarotResultView: React.FC<TarotResultViewProps> = ({
                 onChange={(e) => setUserInput(e.target.value)} 
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="더 궁금한 점을 물어보세요" 
-                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-xl px-8 py-5 text-white font-playfair text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-800"
+                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-8 md:px-10 py-6 md:py-7 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-16 resize-none min-h-[60px] max-h-[150px] overflow-y-auto"
               />
               <button onClick={handleSendMessage} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-rose-gold hover:text-white transition-colors">
                 <Send className="w-6 h-6" />

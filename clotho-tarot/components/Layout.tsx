@@ -49,7 +49,6 @@ export const Header: React.FC<LayoutProps> = ({
         style={{
           zIndex: 999999,
           pointerEvents: 'auto',
-          height: '140px',
           background: isScrolled 
           ? 'linear-gradient(135deg, rgba(22, 25, 47, 0.95) 0%, rgba(42, 39, 80, 0.95) 25%, rgba(61, 58, 112, 0.95) 50%, rgba(58, 47, 96, 0.95) 75%, rgba(26, 20, 53, 0.95) 100%)'
           : 'transparent',
