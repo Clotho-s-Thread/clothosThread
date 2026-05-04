@@ -60,6 +60,7 @@ const App: React.FC = () => {
   const [regData, setRegData] = useState({ name: '', title: '', description: '', specialization: '' });
 
   const [dbCards, setDbCards] = useState<any[]>([]);
+  const [shuffledCards, setShuffledCards] = useState<any[]>([]);
   const [minorSuitTab, setMinorSuitTab] = useState<'All' | 'Wands' | 'Swords' | 'Cups' | 'Pentacles'>('All');
 
   const spreadSectionRef = useRef<HTMLDivElement>(null);
@@ -118,14 +119,21 @@ const App: React.FC = () => {
         const response = await fetch('/api/tarot');
         if (response.ok) {
           const data = await response.json();
-          console.log('📊 받아온 카드 데이터:', data);
-          console.log('📊 전체 카드 수:', data.length);
-          console.log('📊 메이저 카드 (0-21):', data.filter((c: any) => c.number < 100).length);
-          console.log('📊 마이너 카드 (100+):', data.filter((c: any) => c.number >= 100).length);
-          console.log('📊 첫 번째 카드:', data[0]);
-          console.log('📊 22번째 카드:', data[21]);
-          console.log('📊 23번째 카드:', data[22]);
-          setDbCards(data);
+          
+          // 🔧 서버에서 이제 1~78로 반환 (메이저 1~22, 완드 23~36, 컵 37~50, 소드 51~64, 펜타클 65~78)
+          // 정확히 78장만 필터링
+          const validCards = data.filter((card: any, index: number) => {
+            const num = card.number;
+            // 1~78 범위만 유효
+            return num >= 1 && num <= 78;
+          }).slice(0, 78); // 혹시 모르니 정확히 78장만
+          
+          console.log('📊 원본 카드 수:', data.length);
+          console.log('📊 필터링 후 카드 수:', validCards.length);
+          console.log('📊 카드 번호 (1~78):', validCards.map((c: any) => c.number));
+          
+          setDbCards(validCards);
+          console.log('📊 카드 데이터 로드 완료:', validCards.length, '장');
         }
       } catch (error) {
         console.error('DB 카드 로딩 에러:', error);
@@ -186,15 +194,15 @@ const App: React.FC = () => {
   
   // ==========================================
   // 🛠️ 유틸리티: 카드 슈트 판정
+  // 새로운 형식: 메이저 1~22, 완드 23~36, 컵 37~50, 소드 51~64, 펜타클 65~78
   // ==========================================
   const getCardSuit = (num: number) => {
-    if (num < 100) return 'Major';
-    const prefix = String(num).substring(0, 2);
-    if (prefix === '10') return 'Wands';
-    if (prefix === '11') return 'Cups';
-    if (prefix === '12') return 'Swords';
-    if (prefix === '13') return 'Pentacles';
-    return 'Major';
+    if (num >= 1 && num <= 22) return 'Major';
+    if (num >= 23 && num <= 36) return 'Wands';
+    if (num >= 37 && num <= 50) return 'Cups';
+    if (num >= 51 && num <= 64) return 'Swords';
+    if (num >= 65 && num <= 78) return 'Pentacles';
+    return 'Major'; // 기본값
   };
 
   // ==========================================
@@ -435,6 +443,30 @@ const saveReadingResult = async (reading: ReadingResult) => {
   };
 
   // ==========================================
+  // 🎴 카드 섞기 (Fisher-Yates 알고리즘)
+  // ==========================================
+  const getShuffledCards = () => {
+    const shuffled = [...dbCards];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  // 카드 픽킹 상태로 진입할 때 카드 섞기
+  useEffect(() => {
+    if (state === AppState.CARD_PICKING && dbCards.length > 0) {
+      const shuffled = getShuffledCards();
+      console.log('🎴 카드 섞음 시작');
+      console.log('🎴 dbCards 길이:', dbCards.length);
+      console.log('🎴 shuffled 길이:', shuffled.length);
+      console.log('🎴 shuffled 카드 번호들:', shuffled.map(c => c.number));
+      setShuffledCards(shuffled);
+    }
+  }, [state, dbCards]);
+
+  // ==========================================
   // 🎯 나머지 함수들
   // ==========================================
 
@@ -447,12 +479,15 @@ const saveReadingResult = async (reading: ReadingResult) => {
   const handlePickCard = (index: number) => {
     if (!selectedType) return;
     const maxCards = selectedType === ReadingType.YES_NO ? 1 : 3;
-    const realNumber = dbCards[index]?.number ?? index;
+    
+    // 🎴 shuffledCards가 있으면 그것을 사용, 없으면 dbCards 사용
+    const cardsToUse = shuffledCards.length > 0 ? shuffledCards : dbCards;
+    const realNumber = cardsToUse[index]?.number ?? index;
     
     console.log('🃏 카드 선택:', {
       배열인덱스: index,
       카드번호: realNumber,
-      카드데이터: dbCards[index],
+      카드데이터: cardsToUse[index],
       현재선택된카드: pickedIndices
     });
 
@@ -1329,13 +1364,16 @@ const saveReadingResult = async (reading: ReadingResult) => {
                 className="flex overflow-x-auto no-scrollbar py-0 px-4 gap-3 cursor-grab active:cursor-grabbing w-full h-full items-center justify-center"
                 style={{ scrollSnapType: 'x proximity' }}
               >
-                {Array.from({ length: TOTAL_DECK_SIZE }).map((_, idx) => {
-                  const realNumber = dbCards[idx]?.number ?? idx;
-                  const cardData = dbCards[idx];
-                  const isPicked = pickedIndices.find(p => p.index === realNumber);
-                  const pickOrder = pickedIndices.findIndex(p => p.index === realNumber) + 1;
-                  
-                  const cardBackImageUrl = CARD_BACK_IMAGE_MAP[selectedCardBackDesign];
+                {(() => {
+                  const cardsToRender = shuffledCards.length > 0 ? shuffledCards : dbCards;
+                  console.log('📊 렌더링할 카드 수:', cardsToRender.length);
+                  return cardsToRender.map((card, idx) => {
+                    const realNumber = card?.number ?? idx;
+                    const cardData = card;
+                    const isPicked = pickedIndices.find(p => p.index === realNumber);
+                    const pickOrder = pickedIndices.findIndex(p => p.index === realNumber) + 1;
+                    
+                    const cardBackImageUrl = CARD_BACK_IMAGE_MAP[selectedCardBackDesign];
                   
                   return (
                     <div 
@@ -1368,7 +1406,8 @@ const saveReadingResult = async (reading: ReadingResult) => {
                       )}
                     </div>
                   );
-                })}
+                  });
+                })()}
               </div>
               
               <div className="absolute left-0 top-0 bottom-0 w-8 md:w-32 bg-gradient-to-r from-[#0d0b1a] to-transparent z-20 pointer-events-none" />
