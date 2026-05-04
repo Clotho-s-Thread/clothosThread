@@ -1014,17 +1014,21 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
             <div className="p-6 border-t border-rose-gold/20">
               <div className="relative">
-                <input 
-                  type="text" 
+                <textarea 
                   value={userInput} 
                   onChange={(e) => setUserInput(e.target.value)} 
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(true)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(true);
+                    }
+                  }}
                   placeholder="마스터에게 고민을 털어놓으세요..." 
-                  className="w-full bg-slate-900/60 border border-rose-gold/30 rounded-2xl px-6 py-4 md:px-8 md:py-5 text-white font-playfair text-lg md:text-xl focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-700 shadow-inner"
+                  className="w-full bg-slate-900/60 border border-rose-gold/30 rounded-2xl px-12 md:px-16 py-6 md:py-7 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[60px] max-h-[150px] overflow-y-auto"
                 />
                 <button 
                   onClick={() => handleSendMessage(true)} 
-                  className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-rose-gold rounded-xl text-slate-950 hover:bg-white transition-colors flex items-center justify-center shadow-lg"
+                  className="absolute right-6 bottom-6 w-10 h-10 md:w-12 md:h-12 bg-rose-gold rounded-xl text-slate-950 hover:bg-white transition-colors flex items-center justify-center shadow-lg"
                 >
                   <Send className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
@@ -1058,16 +1062,13 @@ const saveReadingResult = async (reading: ReadingResult) => {
   const renderChatSection = () => {
     if (!readingResult) return null;
     return (
-      <div className="flex flex-col gap-0 mt-8 w-full">
-        {/* 통합 질문 및 답변 프레임 */}
+      <div className="flex flex-col gap-0 mt-8 w-full max-w-full">
         <StreamFrame className="flex flex-col min-h-[750px] p-8 md:p-10 w-full rounded-b-none">
-          {/* 제목 */}
           <div className="text-center mb-8">
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
 
-          {/* 질문 입력 영역 - 상단 고정 */}
-          <div className="relative mb-8 pb-6 border-b border-[#c58e7133]">
+          <div className="relative mb-8 pb-6 border-b border-[#c58e7133] w-full">
             <textarea 
               value={userInput} 
               onChange={(e) => setUserInput(e.target.value)} 
@@ -1078,7 +1079,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
                 }
               }}
               placeholder="더 궁금한 점을 물어보세요" 
-              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-10 md:px-14 py-6 md:py-7 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[60px] max-h-[150px] overflow-y-auto"
+              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-12 md:px-16 py-6 md:py-7 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[60px] max-h-[150px] overflow-y-auto"
             />
             <button 
               onClick={() => handleSendMessage(false)} 
@@ -1088,7 +1089,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
             </button>
           </div>
 
-          {/* 답변 표시 영역 */}
           <div className="flex-1 overflow-y-auto pr-4 space-y-4 no-scrollbar">
             {chatMessages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -1213,7 +1213,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
           <div className="fixed top-[140px] left-0 right-0 bottom-0 overflow-hidden px-6 flex flex-col items-center justify-center">
             <StreamUIOverlay />
             
-            {/* 뒤로가기 버튼 */}
             <button
               onClick={() => {
                 resetReadingState();
@@ -1242,7 +1241,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
           <div className="fixed top-[140px] left-0 right-0 bottom-0 overflow-x-auto overflow-y-hidden flex flex-col bg-transparent">
             <StreamUIOverlay />
             
-            {/* 상단: 안내 문구 + 제목 */}
             <div className="text-center pt-4 pb-3 px-6 flex-shrink-0 z-10 space-y-3 relative">
               <button
                 onClick={() => {
@@ -1267,7 +1265,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
               </div>
             </div>
             
-            {/* 중앙: 카드 영역 (세로만 고정, 가로 스크롤 가능) */}
             <div className="relative w-full z-10 group flex-1 flex items-center overflow-hidden">
               <button 
                 onClick={() => scrollDeck('left')}
@@ -1333,7 +1330,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
               <div className="absolute right-0 top-0 bottom-0 w-8 md:w-32 bg-gradient-to-l from-[#0d0b1a] to-transparent z-20 pointer-events-none" />
             </div>
 
-            {/* 하단: 버튼 */}
             <div className="flex items-center justify-center gap-8 px-6 py-4 flex-shrink-0 z-10">
               <button 
                 onClick={() => setPickedIndices([])} 
