@@ -1074,7 +1074,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
               onChange={(e) => setUserInput(e.target.value)} 
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(false)}
               placeholder="더 궁금한 점을 물어보세요" 
-              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-2xl px-6 md:px-8 py-4 md:py-5 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-700 pr-12"
+              className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-8 md:px-10 py-6 md:py-7 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-16 resize-none min-h-[60px] max-h-[150px] overflow-y-auto"
             />
             <button 
               onClick={() => handleSendMessage(false)} 
