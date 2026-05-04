@@ -1070,7 +1070,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
           </div>
 
           {/* 하단: 입력 영역 (고정) */}
-          <div className="flex-shrink-0 border-t border-[#c58e7133] p-4 md:p-6 bg-slate-950/40">
+          <div className="flex-shrink-0 border-t border-[#c58e7133] p-3 md:p-4">
             <div className="relative">
               <textarea 
                 value={userInput} 
@@ -1082,13 +1082,13 @@ const saveReadingResult = async (reading: ReadingResult) => {
                   }
                 }}
                 placeholder="더 궁금한 점을 물어보세요" 
-                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-12 md:px-16 py-4 md:py-5 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[50px] max-h-[100px] overflow-y-auto"
+                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-12 md:px-16 py-2 md:py-3 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[40px] max-h-[80px] overflow-y-auto"
               />
               <button 
                 onClick={() => handleSendMessage(false)} 
-                className="absolute right-8 bottom-4 p-3 text-rose-gold hover:text-white transition-colors"
+                className="absolute right-6 bottom-2 p-2 text-rose-gold hover:text-white transition-colors"
               >
-                <Send className="w-7 h-7" />
+                <Send className="w-6 h-6" />
               </button>
             </div>
           </div>
