@@ -1050,16 +1050,8 @@ const saveReadingResult = async (reading: ReadingResult) => {
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
 
-          {/* 중간: 메시지 영역 (스크롤 가능, 역방향) */}
-          <div className="flex-1 overflow-y-auto pr-4 space-y-4 no-scrollbar p-8 md:p-10 flex flex-col-reverse">
-            <div ref={chatEndRef} />
-            {isLoading && chatMessages.length > 2 && (
-              <div className="flex justify-start">
-                <div className="p-4 bg-slate-800/60 border border-slate-700 rounded-full">
-                  <RefreshCw className="w-5 h-5 rose-gold-text animate-spin" />
-                </div>
-              </div>
-            )}
+          {/* 중간: 메시지 영역 (스크롤 가능, 아래쪽부터 시작) */}
+          <div className="flex-1 overflow-y-auto pr-4 space-y-4 no-scrollbar p-8 md:p-10 flex flex-col justify-end">
             {chatMessages.slice(2).map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
@@ -1067,6 +1059,14 @@ const saveReadingResult = async (reading: ReadingResult) => {
                 </div>
               </div>
             ))}
+            {isLoading && chatMessages.length > 2 && (
+              <div className="flex justify-start">
+                <div className="p-4 bg-slate-800/60 border border-slate-700 rounded-full">
+                  <RefreshCw className="w-5 h-5 rose-gold-text animate-spin" />
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
           </div>
 
           {/* 하단: 입력 영역 (고정) */}
