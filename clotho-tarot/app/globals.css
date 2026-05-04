@@ -272,25 +272,31 @@ nav {
   z-index: 3 !important;
 }
 
+/* ========================== */
+/* 아카이브 메시지 영역 스크롤바 스타일 */
+/* ========================== */
+
 .archive-messages::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
- 
+
 .archive-messages::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(197, 142, 113, 0.1);
+  border-radius: 10px;
 }
- 
+
 .archive-messages::-webkit-scrollbar-thumb {
-  background: rgba(197, 142, 113, 0.5);
-  border-radius: 3px;
+  background: rgba(197, 142, 113, 0.6);
+  border-radius: 10px;
+  border: 2px solid rgba(197, 142, 113, 0.1);
 }
- 
+
 .archive-messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(197, 142, 113, 0.8);
+  background: rgba(197, 142, 113, 0.9);
 }
- 
+
 /* Firefox */
 .archive-messages {
   scrollbar-width: thin;
-  scrollbar-color: rgba(197, 142, 113, 0.5) transparent;
+  scrollbar-color: rgba(197, 142, 113, 0.6) rgba(197, 142, 113, 0.1);
 }

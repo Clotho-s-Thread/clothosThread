@@ -141,7 +141,23 @@ const App: React.FC = () => {
   // ==========================================
   useEffect(() => {
     if (state === AppState.RESULT) {
+      // 즉시 스크롤
       window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      
+      // 지연 후 재시도
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 0);
+      
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 100);
     }
   }, [state]);
   
@@ -1060,7 +1076,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
           </div>
 
           {/* 중간: 메시지 영역 (스크롤 가능, 아래쪽부터 시작) */}
-          <div className="flex-1 overflow-y-auto space-y-4 p-8 md:p-10 flex flex-col justify-end archive-messages" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(197, 142, 113, 0.5) transparent' }}>
+          <div className="flex-1 overflow-y-auto space-y-4 pr-2 pl-8 md:pl-10 pt-8 md:pt-10 pb-8 md:pb-10 flex flex-col justify-end archive-messages" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(197, 142, 113, 0.6) rgba(197, 142, 113, 0.1)' }}>
             {chatMessages.slice(2).map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
@@ -1079,8 +1095,8 @@ const saveReadingResult = async (reading: ReadingResult) => {
           </div>
 
           {/* 하단: 입력 영역 (고정) */}
-          <div className="flex-shrink-0 border-t border-[#c58e7133] p-3 md:p-4">
-            <div className="relative">
+          <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-10 py-3 md:py-4 w-full">
+            <div className="relative w-full">
               <textarea 
                 value={userInput} 
                 onChange={(e) => setUserInput(e.target.value)} 
@@ -1091,13 +1107,13 @@ const saveReadingResult = async (reading: ReadingResult) => {
                   }
                 }}
                 placeholder="더 궁금한 점을 물어보세요" 
-                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-12 md:px-16 py-2 md:py-3 text-white font-playfair text-base md:text-lg focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-20 resize-none min-h-[40px] max-h-[80px] overflow-y-auto"
+                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-6 md:px-8 py-2 md:py-2 text-white font-playfair text-sm md:text-base focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-16 resize-none min-h-[36px] max-h-[70px] overflow-y-auto"
               />
               <button 
                 onClick={() => handleSendMessage(false)} 
-                className="absolute right-6 bottom-2 p-2 text-rose-gold hover:text-white transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 text-rose-gold hover:text-white transition-colors"
               >
-                <Send className="w-6 h-6" />
+                <Send className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -1344,13 +1360,21 @@ const saveReadingResult = async (reading: ReadingResult) => {
         )}
 
         {state === AppState.RESULT && (
-          <TarotResult 
-            readingResult={readingResult}
-            selectedDeck={selectedDeck}
-            isLoading={isLoading}
-            resetReading={resetReading}
-            renderChatSection={renderChatSection}
-          />
+          <>
+            {(() => {
+              window.scrollTo(0, 0);
+              document.documentElement.scrollTop = 0;
+              document.body.scrollTop = 0;
+              return null;
+            })()}
+            <TarotResult 
+              readingResult={readingResult}
+              selectedDeck={selectedDeck}
+              isLoading={isLoading}
+              resetReading={resetReading}
+              renderChatSection={renderChatSection}
+            />
+          </>
         )}
       </div>
       <LoginModal 
