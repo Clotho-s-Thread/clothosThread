@@ -138,7 +138,7 @@ const TarotResult = ({
             ))}
           </div>
 
-          <div className="flex flex-col gap-12 w-full max-w-4xl mx-auto">
+          <div className="flex flex-col gap-12">
             {/* 운명의 판결 - 스크롤 없음 */}
             <StreamFrame>
               <div className="flex items-center gap-6 mb-12 border-b border-[#c58e7133] pb-6">

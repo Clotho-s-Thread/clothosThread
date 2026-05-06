@@ -95,6 +95,8 @@ const App: React.FC = () => {
   const deckSectionRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const userInputRef = useRef<HTMLTextAreaElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -1218,7 +1220,16 @@ const saveReadingResult = async (reading: ReadingResult) => {
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-4 pr-2 pl-8 md:pl-10 pt-8 md:pt-10 pb-8 md:pb-10 flex flex-col justify-end archive-messages" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(197, 142, 113, 0.6) rgba(197, 142, 113, 0.1)' }}>
+          {/* 💡 핵심 수정 1: overflow-anchor: none 추가 */}
+          <div 
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto space-y-4 pr-2 pl-8 md:pl-10 pt-8 md:pt-10 pb-8 md:pb-10 flex flex-col justify-end archive-messages" 
+            style={{ 
+              scrollbarWidth: 'thin', 
+              scrollbarColor: 'rgba(197, 142, 113, 0.6) rgba(197, 142, 113, 0.1)',
+              overflowAnchor: 'none'
+            }}
+          >
             {chatMessages.slice(2).map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
@@ -1236,19 +1247,35 @@ const saveReadingResult = async (reading: ReadingResult) => {
             <div ref={chatEndRef} style={{ pointerEvents: 'none' }} />
           </div>
 
-          <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-12 py-3 md:py-3 w-full">
+          {/* 💡 핵심 수정 2: 입력창 부분 */}
+          <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-12 py-3 md:py-3 w-full bg-slate-950/60">
             <div className="relative w-full">
               <textarea 
+                ref={userInputRef}
                 value={userInput} 
-                onChange={(e) => setUserInput(e.target.value)} 
+                onChange={(e) => {
+                  setUserInput(e.target.value);
+                  // 리렌더링 중에도 스크롤 위치 유지
+                  if (chatContainerRef.current) {
+                    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+                  }
+                }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleSendMessage(false);
                   }
                 }}
+                onFocus={(e) => {
+                  // 포커스 시 하단으로 스크롤
+                  setTimeout(() => {
+                    if (chatContainerRef.current) {
+                      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+                    }
+                  }, 0);
+                }}
                 placeholder="더 궁금한 점을 물어보세요" 
-                className="w-full bg-slate-950/80 border border-[#c58e714d] rounded-3xl px-6 md:px-8 py-3 md:py-3 text-white font-playfair text-sm md:text-base focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-16 resize-none min-h-[44px] max-h-[44px] overflow-hidden"
+                className="w-full bg-transparent border border-[#c58e714d] rounded-3xl px-6 md:px-8 py-3 md:py-3 text-white font-playfair text-sm md:text-base focus:outline-none focus:border-rose-gold transition-colors placeholder:text-slate-600 pr-16 resize-none min-h-[44px] max-h-[100px] overflow-y-auto"
               />
               <button 
                 onClick={() => handleSendMessage(false)} 
