@@ -1375,13 +1375,12 @@ const saveReadingResult = async (reading: ReadingResult) => {
             
             <button
               onClick={() => {
-                resetReadingState();
                 setState(AppState.HOME);
               }}
               className="absolute top-6 left-6 flex items-center gap-2 text-[#c58e71] hover:text-white transition-colors font-cinzel text-lg tracking-widest uppercase"
             >
               <ChevronLeft className="w-6 h-6" />
-              <span>홈으로 나가기</span>
+              <span>뒤로 가기</span>
             </button>
 
             <h2 className="font-cinzel text-3xl md:text-5xl text-white mb-10 tracking-[0.3em] uppercase text-center">의지의 속삭임</h2>
@@ -1405,12 +1404,12 @@ const saveReadingResult = async (reading: ReadingResult) => {
               <button
                 onClick={() => {
                   resetReadingState();
-                  setState(AppState.HOME);
+                  setState(AppState.QUESTION_INPUT);
                 }}
                 className="absolute left-6 top-4 flex items-center gap-2 text-[#c58e71] hover:text-white transition-colors font-cinzel text-lg tracking-widest uppercase"
               >
                 <ChevronLeft className="w-6 h-6" />
-                <span>홈으로 나가기</span>
+                <span>뒤로 가기</span>
               </button>
               <p className="font-playfair text-sm md:text-base text-rose-gold/80 italic">
                 스와이프하여 지정된 카드 갯수만큼 선택해 주세요
@@ -1521,6 +1520,20 @@ const saveReadingResult = async (reading: ReadingResult) => {
           />
         )}
       </div>
+
+      {/* 💡 맨 위로 올라가는 버튼 (HOME, RESULT 상태에서만 표시) */}
+      {(state === AppState.HOME || state === AppState.RESULT) && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-8 right-8 z-40 p-3 bg-rose-gold/20 border border-rose-gold/40 rounded-full text-rose-gold hover:bg-rose-gold/30 hover:text-white transition-all duration-300 hover:scale-110"
+          aria-label="맨 위로 올라가기"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
+        </button>
+      )}
+
       <LoginModal 
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)} 
