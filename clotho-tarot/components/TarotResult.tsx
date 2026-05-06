@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Compass, RefreshCw } from "lucide-react"; // 아이콘 라이브러리 확인 필요
+import { Compass, RefreshCw } from "lucide-react";
 import StreamFrame from "./StreamFrame";
 import StreamUIOverlay from "./StreamUIOverlay";
 
 interface TarotResultProps {
-  readingResult: any; // 나중에 정확한 타입으로 교체 권장
+  readingResult: any;
   selectedDeck: any;
   isLoading: boolean;
   resetReading: () => void;
@@ -23,18 +23,11 @@ const TarotResult = ({
   
   // 📍 컴포넌트 마운트 시 화면 위에서부터 시작
   useEffect(() => {
-      // 스크롤 부드럽게 이동하는 속성 잠시 해제 (즉시 이동을 위함)
       document.documentElement.style.scrollBehavior = 'auto';
-    
-      // 즉시 스크롤 (최상단)
       window.scrollTo(0, 0);
-    
-      // 혹시 모를 렌더링 딜레이를 위한 추가 스크롤 처리
       const scrollTimeout1 = setTimeout(() => window.scrollTo(0, 0), 0);
       const scrollTimeout2 = setTimeout(() => window.scrollTo(0, 0), 50);
       const scrollTimeout3 = setTimeout(() => window.scrollTo(0, 0), 100);
-    
-      // cleanup: 컴포넌트 언마운트 시 스크롤 동작 원래대로 복원
       return () => {
         document.documentElement.style.scrollBehavior = 'smooth';
         clearTimeout(scrollTimeout1);
@@ -43,7 +36,6 @@ const TarotResult = ({
       };
     }, []);
   
-  // 로딩 중일 때 - 화면 가운데 표시
   if (isLoading && !readingResult?.interpretation) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-[#0d0b1a]/50 z-40">
@@ -64,25 +56,17 @@ const TarotResult = ({
     );
   }
   
-  // 3장 스프레드인지 확인
   const isThreeCard =
     readingResult?.type === "PAST_PRESENT_FUTURE" ||
     readingResult?.cards.length === 3;
 
-  // 공통 카드 렌더링 컴포넌트 (내부 헬퍼)
   const RenderCard = ({ card, i, layoutType }: { card: any; i: number; layoutType: "1" | "3" }) => {
     const c = card as any;
-    // 역방향 판정 로직 (보내주신 코드 그대로 유지)
     const isReversed =
       c.orientation?.toLowerCase() === "reversed" ||
       c.direction?.toLowerCase() === "reversed" ||
       c.isReversed === true ||
       c.is_reversed === true;
-
-      console.log(`card:`, card);
-      console.log(`c:`, c);
-      console.log(`orientation:`, c.orientation, card.orientation);
-      console.log(`isReversed:`, isReversed);
 
     const label = layoutType === "3" 
       ? (i === 0 ? "Past (과거)" : i === 1 ? "Present (현재)" : "Future (미래)") 
@@ -130,7 +114,6 @@ const TarotResult = ({
       <StreamUIOverlay />
 
       {isThreeCard ? (
-        /* --- 🔮 3장 스프레드 레이아웃 --- */
         <div className="flex flex-col gap-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {readingResult?.cards.map((card: any, i: number) => (
@@ -139,7 +122,6 @@ const TarotResult = ({
           </div>
 
           <div className="flex flex-col gap-12">
-            {/* 운명의 판결 - 스크롤 없음 */}
             <StreamFrame>
               <div className="flex items-center gap-6 mb-12 border-b border-[#c58e7133] pb-6">
                 <Compass className="w-8 h-8 rose-gold-text" />
@@ -161,7 +143,6 @@ const TarotResult = ({
               )}
             </StreamFrame>
             
-            {/* 아카이브 질문하기 - 고정 높이 */}
             {renderChatSection && renderChatSection()}
             
             <button
@@ -173,18 +154,14 @@ const TarotResult = ({
           </div>
         </div>
       ) : (
-        /* --- 🃏 1장 스프레드 레이아웃 --- */
         <div className="flex flex-col gap-12">
-          {/* 카드와 리딩 결과를 나란히 배치 */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* 카드 영역 */}
             <div className="lg:col-span-1 flex flex-col gap-8">
               {readingResult?.cards.map((card: any, i: number) => (
                 <RenderCard key={i} card={card} i={i} layoutType="1" />
               ))}
             </div>
 
-            {/* 리딩 결과 영역 - 스크롤 없음 */}
             <div className="lg:col-span-2">
               <StreamFrame>
                 <div className="flex items-center gap-6 mb-12 border-b border-[#c58e7133] pb-6">
@@ -209,10 +186,8 @@ const TarotResult = ({
             </div>
           </div>
 
-          {/* 아카이브 질문하기 - 스크롤 포함 */}
           {renderChatSection && renderChatSection()}
 
-          {/* 새로운 탐색 시작 버튼 - 아카이브 아래 */}
           <button
             onClick={resetReading}
             className="btn-celestial self-center font-bold px-12 py-4 w-full md:w-auto"
