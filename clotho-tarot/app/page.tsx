@@ -95,7 +95,7 @@ const App: React.FC = () => {
   const deckSectionRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const userInputRef = useRef<HTMLTextAreaElement>(null);
+  const userInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
