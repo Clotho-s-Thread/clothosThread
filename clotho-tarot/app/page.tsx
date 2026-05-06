@@ -1222,15 +1222,15 @@ const saveReadingResult = async (reading: ReadingResult) => {
           >
             <div ref={chatEndRef} style={{ pointerEvents: 'none' }} />
             {isLoading && chatMessages.length > 2 && (
-              <div className="flex justify-start min-h-[44px]">
-                <div className="p-4 bg-slate-800/60 border border-slate-700 rounded-full">
-                  <RefreshCw className="w-5 h-5 rose-gold-text animate-spin" />
+              <div className="flex justify-start w-full px-2">
+                <div className="p-3 bg-slate-800/60 border border-slate-700 rounded-full">
+                  <RefreshCw className="w-6 h-6 rose-gold-text animate-spin" />
                 </div>
               </div>
             )}
             {chatMessages.slice(2).reverse().map((msg, i) => (
-              <div key={`msg-${chatMessages.length}-${i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} min-h-[44px] w-full px-2`}>
-                <div className={`max-w-[90%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`} style={{ overflow: 'hidden', wordBreak: 'break-word' }}>
+              <div key={`msg-${chatMessages.length}-${i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full px-2`}>
+                <div className={`max-w-[90%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`} style={{ wordBreak: 'break-word' }}>
                   <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>{msg.content}</p>
                 </div>
               </div>
