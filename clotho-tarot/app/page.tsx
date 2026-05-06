@@ -175,50 +175,39 @@ const App: React.FC = () => {
   }, []);
 
   // ==========================================
-  // 📍 useEffect: 채팅 메시지 스크롤
+  // 📍 스크롤 위치 저장용 ref
   // ==========================================
-  useEffect(() => {
-    if (state !== AppState.RESULT && chatMessages.length > 0 && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chatMessages, state]);
+  const lastScrollPositionRef = useRef<number>(0);
 
   // ==========================================
-  // 📍 useEffect: RESULT 상태 진입 시 화면 위에서 시작
+  // 📍 useEffect: RESULT 상태에서 스크롤 위치 유지
   // ==========================================
   useEffect(() => {
     if (state === AppState.RESULT) {
-      document.documentElement.style.scrollBehavior = 'auto';
-      
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-      
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }, 0);
-      
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }, 50);
-      
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }, 100);
-      
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }, 150);
+      // 스크롤 위치 저장
+      const handleScroll = () => {
+        lastScrollPositionRef.current = window.scrollY;
+      };
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
     }
   }, [state]);
+
+  // ==========================================
+  // 📍 useEffect: RESULT 상태 진입 시 화면 위에서 시작 (딱 한 번만!)
+  // ==========================================
+  useEffect(() => {
+    if (state === AppState.RESULT) {
+      // RESULT 상태에 진입했을 때 딱 한 번만 스크롤
+      document.documentElement.style.scrollBehavior = 'auto';
+      window.scrollTo(0, 0);
+      
+      return () => {
+        document.documentElement.style.scrollBehavior = 'smooth';
+      };
+    }
+  }, [state]);
+  
   
   // ==========================================
   // 🛠️ 유틸리티: 카드 슈트 판정
@@ -608,6 +597,9 @@ const saveReadingResult = async (reading: ReadingResult) => {
     const userContent = userInput.trim();
     const newMsg: ChatMessage = { role: 'user', content: userContent };
 
+    // 💡 현재 스크롤 위치 저장
+    const currentScrollY = window.scrollY;
+
     const updatedMessages = [...chatMessages, newMsg];
     setChatMessages(updatedMessages);
     setUserInput('');
@@ -663,11 +655,9 @@ const saveReadingResult = async (reading: ReadingResult) => {
       }
     } finally {
       setIsLoading(false);
-      // RESULT 상태일 때는 스크롤하지 않음 (아카이브에서만 스크롤)
-      if (state !== AppState.RESULT) {
-        setTimeout(() => {
-          chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+      // 💡 스크롤 위치 유지 (최소한의 복원만)
+      if (state === AppState.RESULT) {
+        window.scrollTo(0, currentScrollY);
       }
     }
   };
@@ -1211,16 +1201,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     );
   };
 
-  // 💡 스크롤 점프 방지: 메시지가 새로 추가될 때만 스크롤
-  useEffect(() => {
-    if (chatEndRef.current && chatMessages.length > 2) {
-      // 브라우저 렌더링 완료 후 스크롤 (비동기)
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }, 0);
-    }
-  }, [chatMessages]);
-
   const renderChatSection = () => {
     if (!readingResult) return null;
     return (
@@ -1230,7 +1210,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
 
-          {/* 💡 flex-col-reverse + 배열 reverse()로 올바른 순서 보장 */}
+          {/* 💡 웹 환경 스크롤 점프 완벽 해결 */}
           <div 
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto space-y-4 pr-2 pl-8 md:pl-10 pt-8 md:pt-10 pb-8 md:pb-10 flex flex-col-reverse archive-messages" 
@@ -1242,30 +1222,29 @@ const saveReadingResult = async (reading: ReadingResult) => {
           >
             <div ref={chatEndRef} style={{ pointerEvents: 'none' }} />
             {isLoading && chatMessages.length > 2 && (
-              <div className="flex justify-start">
+              <div className="flex justify-start min-h-[44px]">
                 <div className="p-4 bg-slate-800/60 border border-slate-700 rounded-full">
                   <RefreshCw className="w-5 h-5 rose-gold-text animate-spin" />
                 </div>
               </div>
             )}
             {chatMessages.slice(2).reverse().map((msg, i) => (
-              <div key={`msg-${chatMessages.length}-${i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`}>
-                  <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+              <div key={`msg-${chatMessages.length}-${i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} min-h-[44px] w-full px-2`}>
+                <div className={`max-w-[90%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`} style={{ overflow: 'hidden', wordBreak: 'break-word' }}>
+                  <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>{msg.content}</p>
                 </div>
               </div>
             ))}
           </div>
 
           {/* 💡 입력창: onChange 중 스크롤 건드리지 않음 */}
-          <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-8 py-2 md:py-2 w-full">
+          <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-8 py-2 md:py-2 w-full" style={{ contain: 'layout' }}>
             <div className="relative w-full">
               <textarea 
                 ref={userInputRef}
                 value={userInput} 
                 onChange={(e) => {
                   setUserInput(e.target.value);
-                  // 💡 여기서 스크롤을 건드리지 않음!
                 }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -1532,21 +1511,13 @@ const saveReadingResult = async (reading: ReadingResult) => {
         )}
 
         {state === AppState.RESULT && (
-          <>
-            {(() => {
-              window.scrollTo(0, 0);
-              document.documentElement.scrollTop = 0;
-              document.body.scrollTop = 0;
-              return null;
-            })()}
-            <TarotResult 
-              readingResult={readingResult}
-              selectedDeck={selectedDeck}
-              isLoading={isLoading}
-              resetReading={resetReading}
-              renderChatSection={renderChatSection}
-            />
-          </>
+          <TarotResult 
+            readingResult={readingResult}
+            selectedDeck={selectedDeck}
+            isLoading={isLoading}
+            resetReading={resetReading}
+            renderChatSection={renderChatSection}
+          />
         )}
       </div>
       <LoginModal 
