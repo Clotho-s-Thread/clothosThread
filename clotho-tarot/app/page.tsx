@@ -483,8 +483,8 @@ const saveReadingResult = async (reading: ReadingResult) => {
       setReadingResult(reading);
 
       setChatMessages([
-        { role: 'user', content: question.trim() },
-        { role: 'assistant', content: interpretation }
+        { role: 'user', content: '' },         // 시스템 메시지 1 (빈칸)
+        { role: 'assistant', content: '' }     // 시스템 메시지 2 (빈칸)
       ]);
 
       console.log("✅ [finalizeSelection] 완료");
@@ -1205,36 +1205,54 @@ const saveReadingResult = async (reading: ReadingResult) => {
     if (!readingResult) return null;
     return (
       <div className="flex flex-col gap-0 mt-8 w-full max-w-full h-[700px]">
-        <StreamFrame className="flex flex-col w-full h-full rounded-b-none overflow-hidden">
+        {/* StreamFrame 대체 - 동일한 스타일의 div */}
+        <div 
+          className="flex flex-col w-full h-full rounded-lg overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, rgba(232, 232, 232, 0.25) 0%, rgba(197, 142, 113, 0.2) 100%)',
+            border: '1px solid rgba(197, 142, 113, 0.3)'
+          }}
+        >
           <div className="text-center py-4 px-8 border-b border-[#c58e7133] flex-shrink-0">
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
 
-          {/* 💡 웹 환경 스크롤 점프 완벽 해결 */}
+          {/* 메시지 컨테이너 */}
           <div 
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto space-y-4 pr-2 pl-8 md:pl-10 pt-8 md:pt-10 pb-8 md:pb-10 flex flex-col-reverse archive-messages" 
+            className="flex-1 overflow-y-auto flex flex-col archive-messages" 
             style={{ 
-              scrollbarWidth: 'thin', 
+              display: 'flex',
+              flexDirection: 'column',
+              scrollbarWidth: 'thin',
               scrollbarColor: 'rgba(197, 142, 113, 0.6) rgba(197, 142, 113, 0.1)',
-              overflowAnchor: 'auto'
+              gap: '1rem',
+              padding: '2rem 1rem 2rem 2rem',
             }}
           >
             <div ref={chatEndRef} style={{ pointerEvents: 'none' }} />
+            {chatMessages.slice(2).map((msg, i) => (
+              <div 
+                key={`msg-${i}`} 
+                className={`w-full px-2`}
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                  alignItems: 'flex-start'
+                }}
+              >
+                <div className={`${msg.role === 'user' ? 'max-w-[85%]' : 'max-w-[85%]'} px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`} style={{ wordBreak: 'break-word', flexShrink: 0 }}>
+                  <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>{msg.content}</p>
+                </div>
+              </div>
+            ))}
             {isLoading && chatMessages.length > 2 && (
-              <div className="flex justify-start w-full px-2">
+              <div className="flex justify-start w-full px-1">
                 <div className="p-3 bg-slate-800/60 border border-slate-700 rounded-full">
                   <RefreshCw className="w-6 h-6 rose-gold-text animate-spin" />
                 </div>
               </div>
             )}
-            {chatMessages.slice(2).reverse().map((msg, i) => (
-              <div key={`msg-${chatMessages.length}-${i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full px-2`}>
-                <div className={`max-w-[90%] px-6 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-rose-gold/20 border border-rose-gold/40 text-amber-50' : 'bg-slate-800/60 border border-slate-700 text-slate-200'}`} style={{ wordBreak: 'break-word' }}>
-                  <p className="font-playfair text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>{msg.content}</p>
-                </div>
-              </div>
-            ))}
           </div>
 
           {/* 💡 입력창 */}
@@ -1264,7 +1282,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
               </button>
             </div>
           </div>
-        </StreamFrame>
+        </div>
       </div>
     );
   };
