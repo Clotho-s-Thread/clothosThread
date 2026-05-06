@@ -1237,29 +1237,30 @@ const saveReadingResult = async (reading: ReadingResult) => {
             ))}
           </div>
 
-          {/* 💡 입력창: onChange 중 스크롤 건드리지 않음 */}
-          <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-8 py-2 md:py-2 w-full" style={{ contain: 'layout' }}>
-            <div className="relative w-full">
-              <textarea 
+          {/* 💡 입력창 */}
+          <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-8 py-3 md:py-3 w-full" style={{ contain: 'layout' }}>
+            <div className="relative w-full flex items-center gap-3">
+              <input 
                 ref={userInputRef}
+                type="text"
                 value={userInput} 
                 onChange={(e) => {
                   setUserInput(e.target.value);
                 }}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
                     handleSendMessage(false);
                   }
                 }}
                 placeholder="더 궁금한 점을 물어보세요" 
-                className="w-full bg-slate-950/40 border border-[#c58e714d] rounded-2xl px-4 md:px-6 py-2 md:py-2 text-white font-playfair text-sm md:text-sm focus:outline-none focus:border-[#c58e71]/60 focus:shadow-none transition-colors placeholder:text-slate-600 pr-14 resize-none min-h-[40px] max-h-[80px] overflow-y-auto"
+                className="flex-1 bg-slate-950/40 border border-[#c58e714d] rounded-2xl px-6 py-3 text-white font-playfair text-sm focus:outline-none focus:border-[#c58e71]/60 focus:shadow-none transition-colors placeholder:text-slate-600"
               />
               <button 
                 onClick={() => handleSendMessage(false)} 
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-rose-gold hover:text-white transition-colors"
+                className="flex-shrink-0 p-2 text-rose-gold hover:text-white transition-colors"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-5 h-5" />
               </button>
             </div>
           </div>
