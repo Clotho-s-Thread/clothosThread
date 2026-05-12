@@ -14,6 +14,7 @@ interface LayoutProps {
   onLoginClick: () => void;
   onLogout: () => void;
   onShopClick: () => void;
+  isHomePage?: boolean;
 }
 
 export const Header: React.FC<LayoutProps> = ({ 
@@ -25,37 +26,54 @@ export const Header: React.FC<LayoutProps> = ({
   onMyPageClick,
   onLoginClick,
   onShopClick,
-  onLogout 
+  onLogout,
+  isHomePage = false
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [headerBackground, setHeaderBackground] = useState('transparent');
 
+  // 헤더 배경 변경만 처리
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      if (!isHomePage) {
+        setIsScrolled(window.scrollY > 50);
+        return;
+      }
+
+      // 홈페이지: 섹션별 헤더 배경 동적 변경
+      const scrollPosition = window.scrollY;
+      const viewportHeight = window.innerHeight;
+      const sectionIndex = Math.floor(scrollPosition / viewportHeight);
+
+      // 섹션별 배경 설정
+      const backgrounds = [
+        'transparent', // 섹션 0 (히어로)
+        'linear-gradient(135deg, rgba(22, 25, 47, 0.85) 0%, rgba(42, 39, 80, 0.85) 25%, rgba(61, 58, 112, 0.85) 50%, rgba(58, 47, 96, 0.85) 75%, rgba(26, 20, 53, 0.85) 100%)', // 섹션 1 (스프레드)
+        'linear-gradient(135deg, rgba(22, 25, 47, 0.85) 0%, rgba(42, 39, 80, 0.85) 25%, rgba(61, 58, 112, 0.85) 50%, rgba(58, 47, 96, 0.85) 75%, rgba(26, 20, 53, 0.85) 100%)', // 섹션 2 (아르카나)
+      ];
+
+      setHeaderBackground(backgrounds[sectionIndex] || backgrounds[backgrounds.length - 1]);
     };
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isHomePage]);
 
   return (
-    <div className="min-h-screen" style={{
-      background: 'linear-gradient(135deg, #16192f 0%, #2a2750 25%, #3d3a70 50%, #3a2f60 75%, #1a1435 100%)',
-      backgroundAttachment: 'fixed'
-    }}>
-      {/* ✨ 헤더 - 로고와 네비게이션 함께 */}
-      <nav 
-        className={`fixed top-0 w-full transition-all duration-500 ${isScrolled ? 'border-b border-[#c58e7133]' : ''}`}
+    <>
+      {/* ✨ 헤더 - 항상 고정 */}
+      <header
+        className="fixed top-0 left-0 right-0 h-[10vh] transition-all duration-500 flex items-center"
         style={{
           zIndex: 999999,
           pointerEvents: 'auto',
-          background: isScrolled 
-          ? 'linear-gradient(135deg, rgba(22, 25, 47, 0.95) 0%, rgba(42, 39, 80, 0.95) 25%, rgba(61, 58, 112, 0.95) 50%, rgba(58, 47, 96, 0.95) 75%, rgba(26, 20, 53, 0.95) 100%)'
-          : 'transparent',
-          backdropFilter: isScrolled ? 'blur(20px)' : 'none',
-          WebkitBackdropFilter: isScrolled ? 'blur(20px)' : 'none',
-          display: 'flex',
-          alignItems: 'center'
+          background: isHomePage ? headerBackground : (isScrolled 
+            ? 'linear-gradient(135deg, rgba(22, 25, 47, 0.95) 0%, rgba(42, 39, 80, 0.95) 25%, rgba(61, 58, 112, 0.95) 50%, rgba(58, 47, 96, 0.95) 75%, rgba(26, 20, 53, 0.95) 100%)'
+            : 'transparent'),
+          backdropFilter: (isHomePage || isScrolled) ? 'blur(20px)' : 'none',
+          WebkitBackdropFilter: (isHomePage || isScrolled) ? 'blur(20px)' : 'none',
+          borderBottom: (isHomePage || isScrolled) ? '1px solid rgba(197, 142, 113, 0.2)' : 'none',
         }}
       >
         <div className="w-full px-20 flex justify-between items-center">
@@ -67,7 +85,7 @@ export const Header: React.FC<LayoutProps> = ({
             <img 
               src="/images/logo_image.png" 
               alt="Clotho's Thread Logo" 
-              className="h-32 w-auto object-contain transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-lg"
+              className="h-24 w-auto object-contain transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-lg"
             />
           </div>
 
@@ -179,14 +197,22 @@ export const Header: React.FC<LayoutProps> = ({
             )}
           </div>
         </div>
-      </nav>
+      </header>
 
-      {/* 헤더 높이만큼 상단 여백 */}
-      <div style={{ height: '140px' }}></div>
-
-      <main className="relative z-10">
-        {children}
-      </main>
-    </div>
+      {/* 콘텐츠 영역 */}
+      <div 
+        className={isHomePage ? "home-page-wrapper" : "pt-[10vh]"}
+        style={{
+          background: 'linear-gradient(135deg, #16192f 0%, #2a2750 25%, #3d3a70 50%, #3a2f60 75%, #1a1435 100%)',
+          backgroundAttachment: 'fixed',
+          height: isHomePage ? '100vh' : 'auto',
+          overflowY: isHomePage ? 'scroll' : 'auto'
+        }}
+      >
+        <main className="relative z-10">
+          {children}
+        </main>
+      </div>
+    </>
   );
 };

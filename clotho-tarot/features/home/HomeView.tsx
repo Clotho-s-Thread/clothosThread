@@ -28,7 +28,7 @@ const HomeView: React.FC<HomeViewProps> = ({
       <StreamUIOverlay />
       
       {/* --- 히어로 섹션 --- */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center -mt-40">
+      <section className="fullpage-section relative flex flex-col items-center justify-center">
         <div className="text-center relative z-10 px-6">
           <div className="flex justify-center gap-4 mb-8">
             <Star className="w-4 h-4 rose-gold-text" />
@@ -82,10 +82,10 @@ const HomeView: React.FC<HomeViewProps> = ({
       </section>
 
       {/* --- 운명의 정렬 (스프레드 선택) --- */}
-      <section ref={spreadSectionRef} className="relative min-h-screen py-32 px-6 flex flex-col items-center bg-slate-950/20 backdrop-blur-sm">
+      <section ref={spreadSectionRef} className="fullpage-section relative py-32 px-6 flex flex-col items-center justify-center bg-slate-950/20 backdrop-blur-sm">
         <div className="mb-20 flex items-center gap-6">
            <div className="w-24 md:w-32 h-[1px] bg-[#c58e714d]" />
-           <h2 className="font-cinzel text-2xl md:text-4xl text-white tracking-[0.4em] uppercase text-center">운명의 정렬</h2>
+           <h2 className="font-cinzel text-2xl md:text-4xl text-white tracking-[0.4em] uppercase text-center whitespace-nowrap">운명의 정렬</h2>
            <div className="w-24 md:w-32 h-[1px] bg-[#c58e714d]" />
         </div>
         
@@ -119,7 +119,7 @@ const HomeView: React.FC<HomeViewProps> = ({
       </section>
 
       {/* --- 아르카나 도감 --- */}
-      <section ref={deckSectionRef} className="relative min-h-screen py-32 px-6 flex flex-col items-center">
+      <section ref={deckSectionRef} className="fullpage-section relative py-32 px-6 flex flex-col items-center justify-center">
         <h2 className="font-cinzel text-3xl md:text-5xl text-white tracking-[0.5em] mb-24 uppercase text-center">아르카나 도감</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl w-full relative z-10">
            <div onClick={() => onArcanaViewClick(AppState.MAJOR_ARCANA_VIEW)} className="group cursor-pointer">

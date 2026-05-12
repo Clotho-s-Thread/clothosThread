@@ -15,6 +15,7 @@ import PointPurchase from '../components/PointPurchase';
 import Checkout from '../components/Checkout';
 import SubscriptionPurchase from '../components/SubscriptionPurchase';
 import { Moon, Sparkles, RefreshCw, ArrowRight, Star, Compass, Sun, Eye, ChevronDown, Send, Hexagon, ChevronLeft, ChevronRight, User as UserIcon, MessageCircle, UserPlus, Info, Lock, AlertTriangle } from 'lucide-react';
+import './globals.css';
 
 // ==========================================
 // 📌 오프라인 모드: 테스트용 해석 템플릿
@@ -144,7 +145,7 @@ const App: React.FC = () => {
   }, []);
 
   // ==========================================
-  // 📍 useEffect: DB에서 타로 카드 로드 (API 에러 처리 추가)
+  // 📍 useEffect: DB에서 타로 카드 로드
   // ==========================================
   useEffect(() => {
     const fetchCards = async () => {
@@ -153,19 +154,17 @@ const App: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           
-          // 서버에서 1~78로 반환 (메이저 1~22, 완드 23~36, 컵 37~50, 소드 51~64, 펜타클 65~78)
           const validCards = data.filter((card: any) => {
             const num = card.number;
             return num >= 1 && num <= 78;
           }).slice(0, 78);
           
           setDbCards(validCards);
-          setApiError(null); // API 성공 시 에러 해제
+          setApiError(null);
           setIsOfflineMode(false);
         }
       } catch (error) {
         console.error('❌ DB 카드 로딩 에러:', error);
-        // ✅ API 실패 시 오프라인 모드 자동 활성화
         setIsOfflineMode(true);
         setApiError('서버 연결 실패: 오프라인 모드로 전환되었습니다');
         console.log('📴 오프라인 모드 자동 활성화');
@@ -184,7 +183,6 @@ const App: React.FC = () => {
   // ==========================================
   useEffect(() => {
     if (state === AppState.RESULT) {
-      // 스크롤 위치 저장
       const handleScroll = () => {
         lastScrollPositionRef.current = window.scrollY;
       };
@@ -194,11 +192,10 @@ const App: React.FC = () => {
   }, [state]);
 
   // ==========================================
-  // 📍 useEffect: RESULT 상태 진입 시 화면 위에서 시작 (딱 한 번만!)
+  // 📍 useEffect: RESULT 상태 진입 시 화면 위에서 시작
   // ==========================================
   useEffect(() => {
     if (state === AppState.RESULT) {
-      // RESULT 상태에 진입했을 때 딱 한 번만 스크롤
       document.documentElement.style.scrollBehavior = 'auto';
       window.scrollTo(0, 0);
       
@@ -361,7 +358,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   };
 
   // ==========================================
-  // 🎯 타로 읽기 최종 실행 (API 에러 처리 추가)
+  // 🎯 타로 읽기 최종 실행
   // ==========================================
   const finalizeSelection = async () => {
     console.log("🚀 [finalizeSelection] 함수 시작");
@@ -388,11 +385,9 @@ const saveReadingResult = async (reading: ReadingResult) => {
     setState(AppState.RESULT);
 
     try {
-      // ✅ API 사용 가능한지 확인
       let interpretation: string;
 
       if (isOfflineMode) {
-        // 📴 오프라인 모드: 로컬 템플릿 사용
         console.log('📴 오프라인 모드: 로컬 템플릿으로 해석 생성');
         
         const selectedCards = pickedIndices.map(({index}) => {
@@ -404,7 +399,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
         
         interpretation = interpretationFn ? interpretationFn(selectedCards, question) : '카드의 메시지를 해석할 수 없습니다.';
       } else {
-        // 🌐 온라인 모드: API 호출 시도
         console.log('🌐 온라인 모드: API 호출 시도');
         
         const requestData = {
@@ -442,14 +436,12 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
           interpretation = data.text;
         } catch (apiErr) {
-          // ✅ API 실패 시 자동으로 오프라인 모드로 전환
           console.error("❌ API 호출 실패:", apiErr);
           console.log('📴 API 실패: 오프라인 모드로 자동 전환');
           
           setIsOfflineMode(true);
           setApiError(`API 연결 실패: ${apiErr instanceof Error ? apiErr.message : '알 수 없는 오류'}`);
           
-          // 오프라인 모드로 다시 실행
           const selectedCards = pickedIndices.map(({index}) => {
             return dbCards.find((card: any) => card.number === index);
           });
@@ -483,8 +475,8 @@ const saveReadingResult = async (reading: ReadingResult) => {
       setReadingResult(reading);
 
       setChatMessages([
-        { role: 'user', content: '' },         // 시스템 메시지 1 (빈칸)
-        { role: 'assistant', content: '' }     // 시스템 메시지 2 (빈칸)
+        { role: 'user', content: '' },
+        { role: 'assistant', content: '' }
       ]);
 
       console.log("✅ [finalizeSelection] 완료");
@@ -498,8 +490,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
     }
   };
 
-  // 🎴 카드 섞기 (Fisher-Yates 알고리즘)
-  // ==========================================
+  // 🎴 카드 섞기
   const getShuffledCards = () => {
     const shuffled = [...dbCards];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -509,7 +500,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     return shuffled;
   };
 
-  // 카드 픽킹 상태로 진입할 때 카드 섞기
   useEffect(() => {
     if (state === AppState.CARD_PICKING && dbCards.length > 0) {
       const shuffled = getShuffledCards();
@@ -531,7 +521,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     if (!selectedType) return;
     const maxCards = selectedType === ReadingType.YES_NO ? 1 : 3;
     
-    // 🎴 shuffledCards가 있으면 그것을 사용, 없으면 dbCards 사용
     const cardsToUse = shuffledCards.length > 0 ? shuffledCards : dbCards;
     const realNumber = cardsToUse[index]?.number ?? index;
     
@@ -589,7 +578,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   };
 
   // ==========================================
-  // 🎯 후속 질문 전송 함수 (API 에러 처리 추가)
+  // 🎯 후속 질문 전송 함수
   // ==========================================
   const handleSendMessage = async (isConsultationMode: boolean = false) => {
     if (!userInput.trim() || isLoading) return;
@@ -597,7 +586,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     const userContent = userInput.trim();
     const newMsg: ChatMessage = { role: 'user', content: userContent };
 
-    // 💡 현재 스크롤 위치 저장
     const currentScrollY = window.scrollY;
 
     const updatedMessages = [...chatMessages, newMsg];
@@ -606,11 +594,9 @@ const saveReadingResult = async (reading: ReadingResult) => {
     setIsLoading(true);
 
     console.log(`📤 [handleSendMessage] 전송 messages 수: ${updatedMessages.length}개`);
-    console.log(`📤 [handleSendMessage] 후속 질문 여부: ${updatedMessages.length >= 2 ? '✅ 후속' : '🆕 최초'}`);
 
     try {
       if (isOfflineMode) {
-        // 📴 오프라인 모드: 미리 정의된 응답
         const responses = [
           `"${userContent}"에 대한 당신의 생각은 맞습니다. 당신의 직관을 믿으세요.`,
           `그 질문은 깊은 성찰을 요구합니다. 지난 카드들을 다시 살펴보세요.`,
@@ -620,7 +606,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
         const randomResponse = responses[Math.floor(Math.random() * responses.length)];
         setChatMessages(prev => [...prev, { role: 'assistant', content: randomResponse }]);
       } else {
-        // 🌐 온라인 모드: API 호출 시도
         try {
           const res = await fetch('https://clotho-server-vyw7.vercel.app/api/tarot', {
             method: 'POST',
@@ -645,7 +630,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
 
         } catch (error) {
           console.error('❌ 채팅 전송 에러:', error);
-          // ✅ API 실패 시 오프라인 모드로 전환
           setIsOfflineMode(true);
           setApiError(`API 연결 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
           
@@ -655,7 +639,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
       }
     } finally {
       setIsLoading(false);
-      // 💡 스크롤 위치 유지 (최소한의 복원만)
       if (state === AppState.RESULT) {
         window.scrollTo(0, currentScrollY);
       }
@@ -676,9 +659,12 @@ const saveReadingResult = async (reading: ReadingResult) => {
     );
   };
 
-  // 렌더링 함수들... (기존 코드와 동일)
+  // ==========================================
+  // 📌 렌더링 함수들
+  // ==========================================
+  
   const renderArcanaView = (type: 'Major' | 'Minor') => (
-    <div className="pt-8 px-6 max-w-7xl mx-auto min-h-screen pb-40">
+    <div className="fullpage-section pt-8 px-6 max-w-7xl mx-auto pb-40">
       <StreamUIOverlay />
       <div className="text-center mb-20 relative z-10">
         <button 
@@ -743,7 +729,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
         ))}
       </div>
 
-      {/* 카드 상세 모달 */}
       {selectedCardDetail && (
         <div 
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6" 
@@ -778,14 +763,13 @@ const saveReadingResult = async (reading: ReadingResult) => {
   );
 
   const renderDeckSelection = () => (
-    <div className="pt-8 px-6 max-w-7xl mx-auto min-h-screen pb-40">
+    <div className="fullpage-section pt-8 px-6 max-w-7xl mx-auto pb-40">
       <StreamUIOverlay />
       <div className="text-center mb-20 relative z-10">
         <h2 className="font-cinzel text-4xl md:text-6xl text-white mb-6 tracking-[0.4em] uppercase">타로 덱 선택</h2>
         <p className="font-playfair text-xl text-white/60 italic">당신의 영혼과 공명하는 실타래를 선택하세요.</p>
       </div>
 
-      {/* 앞면/뒷면 탭 */}
       <div className="flex justify-center gap-8 mb-16 relative z-10">
         <button
           onClick={() => setDeckTab('front')}
@@ -809,7 +793,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
         </button>
       </div>
 
-      {/* 앞면 카드 테마 */}
       {deckTab === 'front' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 max-w-5xl mx-auto">
           {TAROT_DECKS.map((deck) => {
@@ -894,7 +877,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
         </div>
       )}
 
-      {/* 뒷면 카드 테마 */}
       {deckTab === 'back' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 max-w-5xl mx-auto">
           {CARD_BACK_DESIGNS.map((backDesign) => (
@@ -955,7 +937,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   );
 
   const renderMasters = () => (
-    <div className="pt-40 px-6 max-w-7xl mx-auto min-h-screen pb-40">
+    <div className="fullpage-section pt-40 px-6 max-w-7xl mx-auto pb-40">
       <StreamUIOverlay />
       <div className="text-center mb-16">
         <h2 className="font-cinzel text-3xl md:text-5xl text-white tracking-[0.5em] mb-6 uppercase">천상의 마스터들</h2>
@@ -1023,7 +1005,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   );
 
   const renderMasterRegistration = () => (
-    <div className="pt-40 px-6 max-w-3xl mx-auto min-h-screen pb-40">
+    <div className="fullpage-section pt-40 px-6 max-w-3xl mx-auto pb-40">
       <StreamUIOverlay />
       <div className="text-center mb-16">
         <h2 className="font-cinzel text-4xl md:text-5xl text-white tracking-[0.3em] mb-4 uppercase">전문가 자격 증명</h2>
@@ -1092,7 +1074,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   );
 
   const renderLiveConsultation = () => (
-    <div className="pt-32 px-6 max-w-6xl mx-auto min-h-screen pb-40">
+    <div className="fullpage-section pt-32 px-6 max-w-6xl mx-auto pb-40">
       <StreamUIOverlay />
       
       <div className="flex flex-col lg:flex-row gap-10 h-[auto] lg:h-[800px]">
@@ -1205,7 +1187,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
     if (!readingResult) return null;
     return (
       <div className="flex flex-col gap-0 mt-8 w-full max-w-full h-[700px]">
-        {/* StreamFrame 대체 - 동일한 스타일의 div */}
         <div 
           className="flex flex-col w-full h-full rounded-lg overflow-hidden"
           style={{
@@ -1217,7 +1198,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
             <span className="font-cinzel text-sm rose-gold-text tracking-[0.4em] uppercase font-bold">아카이브에 질문하기</span>
           </div>
 
-          {/* 메시지 컨테이너 */}
           <div 
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto flex flex-col archive-messages" 
@@ -1255,7 +1235,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
             )}
           </div>
 
-          {/* 💡 입력창 */}
           <div className="flex-shrink-0 border-t border-[#c58e7133] px-6 md:px-8 py-3 md:py-3 w-full" style={{ contain: 'layout' }}>
             <div className="relative w-full flex items-center gap-3">
               <input 
@@ -1290,6 +1269,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
   return (
     <Header 
       user={user}
+      isHomePage={state === AppState.HOME}
       onHomeClick={() => {
         resetReadingState();
         window.scrollTo(0, 0);
@@ -1388,7 +1368,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
         )}
 
         {state === AppState.QUESTION_INPUT && (
-          <div className="fixed top-[140px] left-0 right-0 bottom-0 overflow-hidden px-6 flex flex-col items-center justify-center">
+          <div className="fullpage-section fixed top-[140px] left-0 right-0 bottom-0 overflow-hidden px-6 flex flex-col items-center justify-center">
             <StreamUIOverlay />
             
             <button
@@ -1415,7 +1395,7 @@ const saveReadingResult = async (reading: ReadingResult) => {
         )}
 
         {state === AppState.CARD_PICKING && (
-          <div className="fixed top-[140px] left-0 right-0 bottom-0 overflow-x-auto overflow-y-hidden flex flex-col bg-transparent">
+          <div className="fullpage-section fixed top-[140px] left-0 right-0 bottom-0 overflow-x-auto overflow-y-hidden flex flex-col bg-transparent">
             <StreamUIOverlay />
             
             <div className="text-center pt-4 pb-3 px-6 flex-shrink-0 z-10 space-y-3 relative">
@@ -1539,7 +1519,6 @@ const saveReadingResult = async (reading: ReadingResult) => {
         )}
       </div>
 
-      {/* 💡 맨 위로 올라가는 버튼 (HOME, RESULT 상태에서만 표시) */}
       {(state === AppState.HOME || state === AppState.RESULT) && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
