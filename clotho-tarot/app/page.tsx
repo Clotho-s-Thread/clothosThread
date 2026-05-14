@@ -1519,17 +1519,36 @@ const saveReadingResult = async (reading: ReadingResult) => {
         )}
       </div>
 
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-8 right-8 z-50 p-3 bg-rose-gold/20 border border-rose-gold/40 rounded-full text-rose-gold hover:bg-rose-gold/30 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95"
-        aria-label="맨 위로 올라가기"
-        type="button"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-        </svg>
-      </button>
-
+      {(state === AppState.HOME || state === AppState.RESULT) && (
+  <button
+    onClick={() => {
+      // 풀페이지 wrapper 찾기
+      const homeWrapper = document.querySelector('.home-page-wrapper');
+      
+      if (homeWrapper) {
+        // 풀페이지 wrapper가 있으면 그것을 스크롤
+        homeWrapper.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      } else {
+        // 없으면 window 스크롤
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'smooth'
+        });
+      }
+    }}
+    className="fixed bottom-8 right-8 z-50 p-3 bg-rose-gold/20 border border-rose-gold/40 rounded-full text-rose-gold hover:bg-rose-gold/30 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+    aria-label="맨 위로 올라가기"
+    type="button"
+  >
+    <svg className="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 10l7-7m0 0l7 7m-7-7v18" />
+    </svg>
+  </button>
+)}
       <LoginModal 
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)} 
