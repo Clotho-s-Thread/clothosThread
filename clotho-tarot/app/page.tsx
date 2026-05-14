@@ -1519,17 +1519,16 @@ const saveReadingResult = async (reading: ReadingResult) => {
         )}
       </div>
 
-      {(state === AppState.HOME || state === AppState.RESULT) && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-8 right-8 z-40 p-3 bg-rose-gold/20 border border-rose-gold/40 rounded-full text-rose-gold hover:bg-rose-gold/30 hover:text-white transition-all duration-300 hover:scale-110"
-          aria-label="맨 위로 올라가기"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-          </svg>
-        </button>
-      )}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="fixed bottom-8 right-8 z-50 p-3 bg-rose-gold/20 border border-rose-gold/40 rounded-full text-rose-gold hover:bg-rose-gold/30 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95"
+        aria-label="맨 위로 올라가기"
+        type="button"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+      </button>
 
       <LoginModal 
         isOpen={isLoginModalOpen} 
